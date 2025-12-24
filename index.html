@@ -5,91 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wordle Solver</title>
     <style>
-        body { 
-            font-family: sans-serif; 
-            background: #121213; 
-            color: white; 
-            max-width: 600px; 
-            margin: auto; 
-            padding: 20px; 
-        }
-        .stats { 
-            display: flex; 
-            justify-content: space-between; 
-            margin-bottom: 20px; 
-            padding: 10px; 
-            background: #1a1a1b; 
-            border-radius: 8px; 
-            font-size: 14px;
-        }
+        body { font-family: sans-serif; background: #121213; color: white; max-width: 600px; margin: auto; padding: 20px; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 10px; background: #1a1a1b; border-radius: 8px; font-size: 14px; }
         
-        /* Color Classes */
-        .A { color: #6aaa64; font-weight: bold; } /* Past Answer - Green */
-        .O { color: #5dade2; font-weight: bold; } /* Original - Bright Blue */
-        .X { color: #f1c40f; font-weight: bold; } /* Extended - Vivid Yellow */
-        .Z { color: #ff4d4d; font-weight: bold; } /* Zero-Chance - Bright Red */
+        /* Color Classes matching your categories */
+        .A { color: #6aaa64; font-weight: bold; } /* Green: Past Answer */
+        .O { color: #5dade2; font-weight: bold; } /* Blue: Original */
+        .X { color: #f1c40f; font-weight: bold; } /* Yellow: Extended */
+        .Z { color: #ff4d4d; font-weight: bold; } /* Red: Zero-Chance */
         
-        /* Vertical Stack Container */
-        .input-container {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        input { 
-            padding: 12px; 
-            font-size: 16px; 
-            border-radius: 4px; 
-            border: 1px solid #3a3a3c; 
-            background: #3a3a3c; 
-            color: white; 
-            width: 100%;
-            box-sizing: border-box; 
-        }
-
-        button { 
-            padding: 12px; 
-            font-size: 16px; 
-            border-radius: 4px; 
-            border: none; 
-            background: #538d4e; 
-            color: white; 
-            cursor: pointer; 
-            font-weight: bold;
-        }
-
-        button:active { background: #6aaa64; }
-
+        .input-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        input { padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #3a3a3c; background: #3a3a3c; color: white; width: 100%; box-sizing: border-box; }
+        button { padding: 12px; font-size: 16px; border-radius: 4px; border: none; background: #538d4e; color: white; cursor: pointer; font-weight: bold; }
+        #computeBtn { background: #c9b458; color: black; }
+        #computeBtn:disabled { background: #3a3a3c; color: #818384; cursor: not-allowed; }
+        button:active { opacity: 0.8; }
+        
         #output { 
             white-space: pre-wrap; 
             font-family: monospace; 
             background: #1a1a1b; 
             padding: 15px; 
             margin-top: 10px; 
-            border-radius: 8px;
-            line-height: 1.6;
-            font-size: 15px;
+            border-radius: 8px; 
+            line-height: 1.6; 
+            font-size: 15px; 
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: #3a3a3c; /* Match your input border color */
+            margin: 15px 0;
+        }
+        
+        .section-header {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 13px;
+            color: #818384;
+            margin-bottom: 8px;
+            display: block;
         }
     </style>
 </head>
 <body>
     <h2>Wordle Solver</h2>
-    
     <div class="stats" id="stats">
         <span class="O">ORIGINAL: 0</span>
         <span class="X">EXTENDED: 0</span>
         <span class="Z">ZERO-CHANCE: 0</span>
     </div>
-    
     <div class="input-container">
         <input type="text" id="guessInput" placeholder="Enter guess (e.g. sater)" maxlength="5">
         <input type="text" id="patternInput" placeholder="Pattern (e.g. g-y--)" maxlength="5">
         <button onclick="handleTurn()">Submit Turn</button>
+        <button id="computeBtn" onclick="runFullAnalysis()">Compute Entropy</button>
     </div>
-
-    <div id="output">Top suggestions will appear here...</div>
-
+    <div id="output">Enter a guess or click 'Compute Entropy' to begin.</div>
     <script src="app.js"></script>
 </body>
 </html>
