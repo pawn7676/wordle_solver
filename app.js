@@ -171,7 +171,7 @@ function renderTopWords(num) {
     if (betterDetectors.length > 0) {
         outputHTML += "<span class='section-header'>Max Entropy</span>";
         betterDetectors.forEach(w => {
-            outputHTML += `!!&nbsp;&nbsp;<span class=\"${w.category}\">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+            outputHTML += `&nbsp;&nbsp;&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
         });
         outputHTML += "<hr>";
     }
