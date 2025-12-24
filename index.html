@@ -6,8 +6,48 @@
     <title>Wordle Solver</title>
     <style>
         body { font-family: sans-serif; background: #121213; color: white; max-width: 600px; margin: auto; padding: 20px; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 10px; background: #1a1a1b; border-radius: 8px; font-size: 14px; }
         
-        /* Stats Bar */
+        /* Color Classes matching your categories */
+        .A { color: #6aaa64; font-weight: bold; } /* Green: Past Answer */
+        .O { color: #5dade2; font-weight: bold; } /* Blue: Original */
+        .X { color: #f1c40f; font-weight: bold; } /* Yellow: Extended */
+        .Z { color: #ff4d4d; font-weight: bold; } /* Red: Zero-Chance */
+        
+        .input-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        input { padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #3a3a3c; background: #3a3a3c; color: white; width: 100%; box-sizing: border-box; }
+        button { padding: 12px; font-size: 16px; border-radius: 4px; border: none; background: #538d4e; color: white; cursor: pointer; font-weight: bold; }
+        #computeBtn { background: #2d5a88; color: white; border: none; font-weight: bold; }
+        #computeBtn:disabled { background: #3a3a3c; color: #818384; cursor: not-allowed; }
+        button:active { opacity: 0.8; }
+        
+        #output { 
+            white-space: pre-wrap; 
+            font-family: monospace; 
+            background: #1a1a1b; 
+            padding: 15px; 
+            margin-top: 10px; 
+            border-radius: 8px; 
+            line-height: 1.6; 
+            font-size: 15px; 
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: #3a3a3c; /* Match your input border color */
+            margin: 15px 0;
+        }
+        
+        .section-header {
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 13px;
+            color: #818384;
+            margin-bottom: 8px;
+            display: block;
+        }
+
         .stats { 
             display: flex; 
             justify-content: space-around; 
@@ -20,61 +60,24 @@
             margin-bottom: 20px;
         }
 
-        /* Color Classes */
-        .O { color: #5dade2; font-weight: bold; } /* Blue: Original */
-        .X { color: #f1c40f; font-weight: bold; } /* Yellow: Extended */
-        .Z { color: #ff4d4d; font-weight: bold; } /* Red: Zero-Chance */
-        .A { color: #6aaa64; font-weight: bold; } /* Green: Past Answer */
-        
-        .input-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
-        input { padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #3a3a3c; background: #3a3a3c; color: white; width: 100%; box-sizing: border-box; }
-        button { padding: 12px; font-size: 16px; border-radius: 4px; border: none; background: #538d4e; color: white; cursor: pointer; font-weight: bold; }
-        #computeBtn { background: #2d5a88; color: white; border: none; font-weight: bold; }
-        
-        /* Hover Card Styling */
-        .info-wrapper { position: relative; display: inline-block; margin-left: 8px; vertical-align: middle; }
-        .info-icon {
-            cursor: pointer; color: #666; font-size: 16px; border: 1px solid #444; border-radius: 50%;
-            width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center;
+        .stats span {
+            white-space: nowrap; 
         }
-        .info-card {
-            visibility: hidden; width: 155px; background-color: #1a1a1b; color: #fff;
-            border: 1px solid #444; border-radius: 8px; padding: 10px; position: absolute;
-            z-index: 100; bottom: 150%; right: 0; opacity: 0; transition: opacity 0.2s;
-            font-size: 11px; line-height: 1.7; box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events: none;
-        }
-        .info-wrapper:hover .info-card { visibility: visible; opacity: 1; }
-        .key-dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
-
-        #output { white-space: pre-wrap; font-family: monospace; background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; line-height: 1.6; font-size: 15px; }
     </style>
 </head>
 <body>
     <h1>Wordle Solver</h1>
-    
     <div class="stats" id="stats">
         <span class="O">ORIG: <span id="originalCount">0</span></span>
         <span class="X">EXT: <span id="extendedCount">0</span></span>
         <span class="Z">ZERO: <span id="zeroChanceCount">0</span></span>
-        
-        <div class="info-wrapper">
-            <span class="info-icon">ⓘ</span>
-            <div class="info-card">
-                <div><span class="key-dot" style="background-color: #5dade2;"></span><b class="O">ORIG:</b> Original List</div>
-                <div><span class="key-dot" style="background-color: #f1c40f;"></span><b class="X">EXT:</b> Extended List</div>
-                <div><span class="key-dot" style="background-color: #e74c3c;"></span><b class="Z">ZERO:</b> Zero-Chance</div>
-                <div><span class="key-dot" style="background-color: #6aaa64;"></span><b class="A">PAST:</b> Past Answers</div>
-            </div>
-        </div>
     </div>    
-
     <div class="input-container">
-        <input type="text" id="guessInput" placeholder="Enter Guess" maxlength="5" autocapitalize="none" spellcheck="false">
-        <input type="text" id="patternInput" placeholder="Green=g, Yellow=y, Black=b" maxlength="5" autocapitalize="none" spellcheck="false">
+        <input type="text" id="guessInput" placeholder="Enter Guess" maxlength="5">
+        <input type="text" id="patternInput" placeholder="Green = g, Yellow = y, Black = b" maxlength="5">
         <button onclick="handleTurn()">Submit Turn</button>
         <button id="computeBtn" onclick="runFullAnalysis()">Compute Entropy</button>
     </div>
-
     <div id="output">Enter a guess or click 'Compute Entropy' to begin.</div>
     <script src="app.js"></script>
 </body>
