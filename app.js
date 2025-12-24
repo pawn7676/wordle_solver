@@ -120,12 +120,13 @@ function handleTurn() {
 function updateStats() {
     const counts = { 'O': 0, 'X': 0, 'Z': 0 };
     possibleAnswers.forEach(w => counts[w.category]++);
-    document.getElementById('stats').innerHTML = `
-        <span class=\"O\">ORIGINAL: ${counts.O}</span>
-        <span class=\"X\">EXTENDED: ${counts.X}</span>
-        <span class=\"Z\">ZERO-CHANCE: ${counts.Z}</span>
-    `;
+    
+    // Target the inner spans specifically to keep the "ORIG:", "EXT:", etc. labels safe
+    document.getElementById('originalCount').textContent = counts.O;
+    document.getElementById('extendedCount').textContent = counts.X;
+    document.getElementById('zeroChanceCount').textContent = counts.Z;
 }
+
 
 function runFullAnalysis() {
     const btn = document.getElementById('computeBtn');
