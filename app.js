@@ -8,7 +8,7 @@ class Word {
 
 let allWords = [];
 let possibleAnswers = [];
-let guessCount = 0; // New: Track rounds for automation logic
+let guessCount = 0; // Tracks rounds to know when to auto-run
 
 async function init() {
     try {
@@ -101,15 +101,15 @@ function handleTurn() {
     }
 
     possibleAnswers = filteredResults;
-    guessCount++; // Increment round count
+    guessCount++; // Increment the round
     
     updateStats();
     
-    // Automation Logic: After Round 1, hide button and run automatically
+    // Automation: Hide button and auto-run after the first guess is submitted
     const btn = document.getElementById('computeBtn');
     if (guessCount > 0) {
-        btn.style.display = 'none'; // Hide the button permanently for this game
-        runFullAnalysis(); // Auto-calculate because it is now fast
+        if (btn) btn.style.display = 'none'; 
+        runFullAnalysis(); 
     }
 
     guessInput.value = '';
@@ -121,9 +121,9 @@ function updateStats() {
     const counts = { 'O': 0, 'X': 0, 'Z': 0 };
     possibleAnswers.forEach(w => counts[w.category]++);
     document.getElementById('stats').innerHTML = `
-        <span class="O">ORIGINAL: ${counts.O}</span>
-        <span class="X">EXTENDED: ${counts.X}</span>
-        <span class="Z">ZERO-CHANCE: ${counts.Z}</span>
+        <span class=\"O\">ORIGINAL: ${counts.O}</span>
+        <span class=\"X\">EXTENDED: ${counts.X}</span>
+        <span class=\"Z\">ZERO-CHANCE: ${counts.Z}</span>
     `;
 }
 
@@ -131,14 +131,13 @@ function runFullAnalysis() {
     const btn = document.getElementById('computeBtn');
     const output = document.getElementById('output');
     
-    // Round 1 Manual Handling: Hide button immediately when clicked
-    if (guessCount === 0) {
+    // Hide the button immediately if clicked manually in Round 1
+    if (guessCount === 0 && btn) {
         btn.style.display = 'none';
     }
     
     output.innerHTML = "<em>Calculating entropy...</em>";
 
-    // Small delay to allow UI to hide button before heavy math starts
     setTimeout(() => {
         renderTopWords(20);
     }, 50);
@@ -170,10 +169,9 @@ function renderTopWords(num) {
     ).slice(0, 5);
 
     if (betterDetectors.length > 0) {
-        // Label updated to remove 'Strategic' per instructions
         outputHTML += "<span class='section-header'>Max Entropy</span>";
         betterDetectors.forEach(w => {
-            outputHTML += `!!&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+            outputHTML += `!!&nbsp;&nbsp;<span class=\"${w.category}\">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
         });
         outputHTML += "<hr>";
     }
@@ -182,20 +180,10 @@ function renderTopWords(num) {
     possibleAnswers.slice(0, num).forEach((w, i) => {
         const count = i + 1;
         const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
-        outputHTML += `${displayNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+        outputHTML += `${displayNum}. <span class=\"${w.category}\">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
     });
 
     document.getElementById('output').innerHTML = outputHTML;
-}
-
-// Add this to your existing reset function to restore Round 1 state
-function resetGameUI() {
-    guessCount = 0;
-    const btn = document.getElementById('computeBtn');
-    btn.style.display = 'block';
-    btn.innerText = "Max Entropy";
-    document.getElementById('output').innerHTML = "";
-    init(); // Re-load data
 }
 
 init();
