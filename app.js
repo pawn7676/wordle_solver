@@ -136,7 +136,7 @@ function renderTopWords(num) {
     
     // Line-cutter logic
     if (absoluteBest.wordString !== possibleAnswers[0].wordString) {
-        output += `!!. ${absoluteBest.wordString.toUpperCase()} (${absoluteBest.category}) - ${absoluteBest.entropy.toFixed(2)} [BEST DETECTOR]\n`;
+        output += `!!  ${absoluteBest.wordString.toUpperCase()} (${absoluteBest.category}) - ${absoluteBest.entropy.toFixed(2)} [MAX ENTROPY]\n`;
         output += "------------------------------\n";
     }
 
