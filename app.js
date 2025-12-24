@@ -119,29 +119,42 @@ function renderTopWords(num) {
     const likely = getLikelyAnswers(possibleAnswers);
     assignEntropy(likely);
 
-    allWords.sort((a, b) => b.entropy - a.entropy);
-    const absoluteBest = allWords[0];
+    // 1. Sort allWords to find the 5 best performers
+    allWords.sort((a, b) => {
+        if (Math.abs(b.entropy - a.entropy) < 0.0001) {
+            // Tie-breaker: Prefer 'Original' words, then alphabetical
+            if (a.category === 'O' && b.category !== 'O') return -1;
+            if (b.category === 'O' && a.category !== 'O') return 1;
+            return a.wordString.localeCompare(b.wordString);
+        }
+        return b.entropy - a.entropy;
+    });
 
+    const maxEntropyWords = allWords.slice(0, 5);
+
+    // 2. Sort your possibleAnswers list normally (Category first, then Entropy)
     possibleAnswers.sort((a, b) => a.category.localeCompare(b.category) || b.entropy - a.entropy);
 
-    let outputHTML = "<strong>TOP SUGGESTIONS:</strong><br>";
+    let outputHTML = "<strong>MAX ENTROPY:</strong><br>";
     
-    // Line-cutter (Detector word)
-    if (absoluteBest.wordString !== possibleAnswers[0].wordString) {
-        outputHTML += `!!&nbsp;&nbsp;<span class="${absoluteBest.category}">${absoluteBest.wordString.toUpperCase()}</span> - ${absoluteBest.entropy.toFixed(2)} <small>[MAX ENTROPY]</small><br>`;
-        outputHTML += "----------------------------------<br>";
-    }
+    // 3. Display the top 5 Max Entropy words
+    maxEntropyWords.forEach(w => {
+        // Class will apply color: Blue (O), Yellow (X), Red (Z), or Green (A)
+        outputHTML += `!!&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+    });
 
+    outputHTML += "----------------------------------<br>";
+
+    // 4. Print the standard list
     possibleAnswers.slice(0, num).forEach((w, i) => {
         const count = i + 1;
-        // Fix for the alignment/ampersand issue
         const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
-        
         outputHTML += `${displayNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
     });
 
     document.getElementById('output').innerHTML = outputHTML;
 }
+
 
 init();
 
