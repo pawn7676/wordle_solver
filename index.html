@@ -17,7 +17,7 @@
         .input-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         input { padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #3a3a3c; background: #3a3a3c; color: white; width: 100%; box-sizing: border-box; }
         button { padding: 12px; font-size: 16px; border-radius: 4px; border: none; background: #538d4e; color: white; cursor: pointer; font-weight: bold; }
-        #computeBtn { background: #c9b458; color: black; }
+        #computeBtn { background: #2d5a88; color: white; border: none; font-weight: bold; }
         #computeBtn:disabled { background: #3a3a3c; color: #818384; cursor: not-allowed; }
         button:active { opacity: 0.8; }
         
@@ -73,8 +73,8 @@
         <span class="Z">ZERO: <span id="zeroChanceCount">0</span></span>
     </div>    
     <div class="input-container">
-        <input type="text" id="guessInput" placeholder="Enter guess (e.g. sater)" maxlength="5">
-        <input type="text" id="patternInput" placeholder="Pattern (e.g. g-y--)" maxlength="5">
+        <input type="text" id="guessInput" placeholder="Enter Guess" maxlength="5">
+        <input type="text" id="patternInput" placeholder="Pattern (Green = g, Yellow = y, Black = b)" maxlength="5">
         <button onclick="handleTurn()">Submit Turn</button>
         <button id="computeBtn" onclick="runFullAnalysis()">Compute Entropy</button>
     </div>
