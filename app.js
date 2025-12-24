@@ -4,11 +4,6 @@ class Word {
         this.category = category;
         this.entropy = 0;
     }
-
-    getColorHex() {
-        const colors = { 'A': '#6aaa64', 'O': '#538d4e', 'X': '#c9b458', 'Z': '#ff4d4d' };
-        return colors[this.category] || '#ffffff';
-    }
 }
 
 let allWords = [];
@@ -84,7 +79,6 @@ function handleTurn() {
         return;
     }
 
-    // Dictionary validation check
     const isValid = allWords.some(w => w.wordString === guessStr);
     if (!isValid) {
         alert(`'${guessStr.toUpperCase()}' is not a valid word.`);
@@ -105,7 +99,6 @@ function handleTurn() {
     updateStats();
     renderTopWords(20);
 
-    // Clear inputs and refocus
     guessInput.value = '';
     patternInput.value = '';
     guessInput.focus();
@@ -133,28 +126,25 @@ function renderTopWords(num) {
 
     let outputHTML = "<strong>TOP SUGGESTIONS:</strong><br>";
     
-    // Line-cutter (Max Entropy)
+    // Line-cutter (Detector word)
     if (absoluteBest.wordString !== possibleAnswers[0].wordString) {
-        outputHTML += `!!  <span class="${absoluteBest.category}">${absoluteBest.wordString.toUpperCase()}</span> - ${absoluteBest.entropy.toFixed(2)} <small>[MAX ENTROPY]</small><br>`;
+        outputHTML += `!!&nbsp;&nbsp;<span class="${absoluteBest.category}">${absoluteBest.wordString.toUpperCase()}</span> - ${absoluteBest.entropy.toFixed(2)} <small>[MAX ENTROPY]</small><br>`;
         outputHTML += "----------------------------------<br>";
     }
 
     possibleAnswers.slice(0, num).forEach((w, i) => {
-        const paddedIndex = (i + 1).toString().padStart(2, '&nbsp;'); // Use non-breaking space for HTML alignment
+        const count = i + 1;
+        // Fix for the alignment/ampersand issue
+        const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
         
-        // Wrap word in a span with the category class (O, X, or Z)
-        outputHTML += `${paddedIndex}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+        outputHTML += `${displayNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
     });
 
-    // CRITICAL: Switch from innerText to innerHTML to allow the colors to show
     document.getElementById('output').innerHTML = outputHTML;
 }
 
-
-// Initialize the app
 init();
 
-// --- KEYBOARD LISTENER GOES HERE ---
 [document.getElementById('guessInput'), document.getElementById('patternInput')].forEach(el => {
     el.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
