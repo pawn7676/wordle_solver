@@ -1,44 +1,48 @@
 import requests
-from bs4 import BeautifulSoup
 import json
-import sys
+from datetime import datetime, timedelta
+import pytz
 
 def update_json():
-    # The URL you suggested
-    url = "https://wordfinder.yourdictionary.com/wordle/answers/"
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    # 1. Set the timezone to Pacific
+    pacific = pytz.timezone('US/Pacific')
+    now = datetime.now(pacific)
     
-    print("--- Starting Daily Update ---")
+    # 2. Target Yesterday
+    yesterday = (now - timedelta(days=1)).strftime('%Y-%m-%d')
+    
+    url = f"https://www.nytimes.com/svc/wordle/v2/{yesterday}.json"
+    
+    print(f"--- Running Cleanup for: {yesterday} ---")
     
     try:
-        response = requests.get(url, headers=headers)
-        soup = BeautifulSoup(response.text, 'html.parser')
-        
-        # This targets the bold word in the first table cell of that site
-        answer_cell = soup.find('td')
-        if not answer_cell:
-            print("Error: Could not find the answer table on the website.")
+        response = requests.get(url)
+        if response.status_code != 200:
+            print(f"Error: Could not find the archived word for {yesterday}")
             return
             
-        today_word = answer_cell.find('b').text.strip().lower()
-        print(f"Scraper found today's word: {today_word.upper()}")
-
-        if len(today_word) == 5:
-            with open('all_words.json', 'r') as f:
-                data = json.load(f)
+        data_nyt = response.json()
+        past_word = data_nyt.get('solution', '').lower()
+        
+        if not past_word:
+            print("Error: NYT data format has changed.")
+            return
             
-            if today_word in data:
-                if data[today_word] != 'A':
-                    data[today_word] = 'A'
-                    with open('all_words.json', 'w') as f:
-                        json.dump(data, f, indent=4)
-                    print(f"SUCCESS: '{today_word.upper()}' updated to Category A.")
-                else:
-                    print(f"NOTICE: '{today_word.upper()}' was already Category A. No change needed.")
+        print(f"Archiving completed word: {past_word.upper()}")
+
+        with open('all_words.json', 'r') as f:
+            local_data = json.load(f)
+        
+        if past_word in local_data:
+            if local_data[past_word] != 'A':
+                local_data[past_word] = 'A'
+                with open('all_words.json', 'w') as f:
+                    json.dump(local_data, f, indent=4)
+                print(f"SUCCESS: Moved '{past_word.upper()}' to Category A.")
             else:
-                print(f"WARNING: '{today_word.upper()}' not found in your dictionary.")
+                print(f"NOTICE: '{past_word.upper()}' was already archived.")
         else:
-            print(f"Error: Scraped word '{today_word}' is not 5 letters.")
+            print(f"WARNING: '{past_word.upper()}' not found in dictionary.")
 
     except Exception as e:
         print(f"CRITICAL ERROR: {e}")
