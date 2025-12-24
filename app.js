@@ -114,14 +114,29 @@ function renderTopWords(num) {
     const likely = getLikelyAnswers(possibleAnswers);
     assignEntropy(likely);
 
-    // Sort: Category first, then entropy desc
+    // 1. Sort allWords (the entire dictionary) to find the absolute best info-gatherer
+    allWords.sort((a, b) => b.entropy - a.entropy);
+    const absoluteBest = allWords[0];
+
+    // 2. Sort your possibleAnswers list normally (Category first, then Entropy)
     possibleAnswers.sort((a, b) => a.category.localeCompare(b.category) || b.entropy - a.entropy);
 
     let output = "TOP SUGGESTIONS:\n";
+    
+    // 3. The "Python Logic" Override: 
+    // If the absolute best word isn't the first word in our possible list, show it first as a "Detector"
+    if (absoluteBest.wordString !== possibleAnswers[0].wordString) {
+        output += `!!. ${absoluteBest.wordString.toUpperCase()} (${absoluteBest.category}) - ${absoluteBest.entropy.toFixed(2)} [BEST DETECTOR]\n`;
+        output += "-".repeat(30) + "\n";
+    }
+
+    // 4. Print the standard list
     possibleAnswers.slice(0, num).forEach((w, i) => {
         output += `${i+1}. ${w.wordString.toUpperCase()} (${w.category}) - ${w.entropy.toFixed(2)}\n`;
     });
+
     document.getElementById('output').innerText = output;
 }
+
 
 init();
