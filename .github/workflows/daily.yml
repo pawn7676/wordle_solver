@@ -19,7 +19,8 @@ jobs:
           python-version: '3.9'
 
       - name: Install dependencies
-        run: pip install requests beautifulsoup4
+        # Added pytz so the script can calculate the date in Pacific Time
+        run: pip install requests pytz
 
       - name: Run update script
         run: python autoupdate.py
