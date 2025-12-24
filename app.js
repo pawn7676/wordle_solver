@@ -114,10 +114,11 @@ function handleTurn() {
 function updateStats() {
     const counts = { 'O': 0, 'X': 0, 'Z': 0 };
     possibleAnswers.forEach(w => counts[w.category]++);
+    
     document.getElementById('stats').innerHTML = `
-        <span>Original: ${counts.O}</span>
-        <span>Extended: ${counts.X}</span>
-        <span>Zero-Chance: ${counts.Z}</span>
+        <span class="O">ORIGINAL: ${counts.O}</span>
+        <span class="X">EXTENDED: ${counts.X}</span>
+        <span class="Z">ZERO-CHANCE: ${counts.Z}</span>
     `;
 }
 
@@ -125,28 +126,30 @@ function renderTopWords(num) {
     const likely = getLikelyAnswers(possibleAnswers);
     assignEntropy(likely);
 
-    // Get the absolute best detector from allWords
     allWords.sort((a, b) => b.entropy - a.entropy);
     const absoluteBest = allWords[0];
 
-    // Sort possibles: Category first, then entropy desc
     possibleAnswers.sort((a, b) => a.category.localeCompare(b.category) || b.entropy - a.entropy);
 
-    let output = "TOP SUGGESTIONS:\n";
+    let outputHTML = "<strong>TOP SUGGESTIONS:</strong><br>";
     
-    // Line-cutter logic
+    // Line-cutter (Max Entropy)
     if (absoluteBest.wordString !== possibleAnswers[0].wordString) {
-        output += `!!  ${absoluteBest.wordString.toUpperCase()} (${absoluteBest.category}) - ${absoluteBest.entropy.toFixed(2)} [MAX ENTROPY]\n`;
-        output += "------------------------------\n";
+        outputHTML += `!!  <span class="${absoluteBest.category}">${absoluteBest.wordString.toUpperCase()}</span> - ${absoluteBest.entropy.toFixed(2)} <small>[MAX ENTROPY]</small><br>`;
+        outputHTML += "----------------------------------<br>";
     }
 
     possibleAnswers.slice(0, num).forEach((w, i) => {
-        // Pad the index to keep 1-9 and 10-20 aligned
-        const paddedIndex = (i + 1).toString().padStart(2, ' ');
-        output += `${paddedIndex}. ${w.wordString.toUpperCase()} (${w.category}) - ${w.entropy.toFixed(2)}\n`;
+        const paddedIndex = (i + 1).toString().padStart(2, '&nbsp;'); // Use non-breaking space for HTML alignment
+        
+        // Wrap word in a span with the category class (O, X, or Z)
+        outputHTML += `${paddedIndex}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
     });
-    document.getElementById('output').innerText = output;
+
+    // CRITICAL: Switch from innerText to innerHTML to allow the colors to show
+    document.getElementById('output').innerHTML = outputHTML;
 }
+
 
 // Initialize the app
 init();
