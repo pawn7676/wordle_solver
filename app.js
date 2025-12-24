@@ -16,7 +16,6 @@ async function init() {
         allWords = Object.entries(data).map(([word, cat]) => new Word(word, cat));
         possibleAnswers = allWords.filter(w => w.category !== 'A');
         updateStats();
-        renderTopWords(20);
     } catch (e) {
         document.getElementById('stats').innerText = "Error loading JSON file.";
     }
@@ -27,9 +26,7 @@ function generateColorPattern(answer, guess) {
     let guessArr = guess.split('');
     let pattern = Array(5).fill('-');
     let counts = {};
-
     for (let char of answerArr) { counts[char] = (counts[char] || 0) + 1; }
-
     for (let i = 0; i < 5; i++) {
         if (guessArr[i] === answerArr[i]) {
             pattern[i] = 'g';
@@ -52,7 +49,6 @@ function assignEntropy(likelyAnswers) {
             let p = generateColorPattern(answer.wordString, guess.wordString);
             patternMap[p] = (patternMap[p] || 0) + 1;
         });
-
         let entropy = 0;
         const total = likelyAnswers.length;
         for (let count of Object.values(patternMap)) {
@@ -79,25 +75,35 @@ function handleTurn() {
         return;
     }
 
-    const isValid = allWords.some(w => w.wordString === guessStr);
-    if (!isValid) {
+    const guessObj = allWords.find(w => w.wordString === guessStr);
+    if (!guessObj) {
         alert(`'${guessStr.toUpperCase()}' is not a valid word.`);
-        guessInput.value = '';
-        guessInput.focus();
         return;
     }
 
+    // ggggg check (Logic from filter_by_color_pattern in Python)
     if (pattern === 'ggggg') {
+        if (!possibleAnswers.some(w => w.wordString === guessStr)) {
+            alert("This word is not in the list of possible answers. Please re-enter the pattern.");
+            return;
+        }
         alert("Solved!");
         return;
     }
 
-    possibleAnswers = possibleAnswers.filter(w => 
+    // Safety check for empty results (Logic from filter_by_color_pattern in Python)
+    const filteredResults = possibleAnswers.filter(w => 
         generateColorPattern(w.wordString, guessStr) === pattern
     );
 
+    if (filteredResults.length === 0) {
+        alert("No words match that color pattern. Please check your pattern and try again.");
+        return;
+    }
+
+    possibleAnswers = filteredResults;
     updateStats();
-    renderTopWords(20);
+    document.getElementById('output').innerHTML = "<em>Stats updated. Click 'Compute Entropy' to see rankings.</em>";
 
     guessInput.value = '';
     patternInput.value = '';
@@ -107,7 +113,6 @@ function handleTurn() {
 function updateStats() {
     const counts = { 'O': 0, 'X': 0, 'Z': 0 };
     possibleAnswers.forEach(w => counts[w.category]++);
-    
     document.getElementById('stats').innerHTML = `
         <span class="O">ORIGINAL: ${counts.O}</span>
         <span class="X">EXTENDED: ${counts.X}</span>
@@ -115,14 +120,27 @@ function updateStats() {
     `;
 }
 
+function runFullAnalysis() {
+    const btn = document.getElementById('computeBtn');
+    const output = document.getElementById('output');
+    btn.innerText = "Computing...";
+    btn.disabled = true;
+    output.innerHTML = "<em>Calculating entropy...</em>";
+
+    setTimeout(() => {
+        renderTopWords(20);
+        btn.innerText = "Compute Entropy";
+        btn.disabled = false;
+    }, 50);
+}
+
 function renderTopWords(num) {
     const likely = getLikelyAnswers(possibleAnswers);
     assignEntropy(likely);
 
-    // 1. Sort allWords to find the 5 best performers
+    // Global sort for absolute max entropy
     allWords.sort((a, b) => {
         if (Math.abs(b.entropy - a.entropy) < 0.0001) {
-            // Tie-breaker: Prefer 'Original' words, then alphabetical
             if (a.category === 'O' && b.category !== 'O') return -1;
             if (b.category === 'O' && a.category !== 'O') return 1;
             return a.wordString.localeCompare(b.wordString);
@@ -130,22 +148,29 @@ function renderTopWords(num) {
         return b.entropy - a.entropy;
     });
 
-    const maxEntropyWords = allWords.slice(0, 5);
-
-    // 2. Sort your possibleAnswers list normally (Category first, then Entropy)
+    // Pool sort for possible answers
     possibleAnswers.sort((a, b) => a.category.localeCompare(b.category) || b.entropy - a.entropy);
 
-    let outputHTML = "<strong>MAX ENTROPY:</strong><br>";
-    
-    // 3. Display the top 5 Max Entropy words
-    maxEntropyWords.forEach(w => {
-        // Class will apply color: Blue (O), Yellow (X), Red (Z), or Green (A)
-        outputHTML += `!!&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
-    });
+    const bestPossibleEntropy = possibleAnswers[0].entropy;
+    const absoluteMaxEntropy = allWords[0].entropy;
 
-    outputHTML += "----------------------------------<br>";
+    let outputHTML = "";
 
-    // 4. Print the standard list
+    // Line-Cutter Logic
+    const betterDetectors = allWords.filter(w => 
+        w.entropy > bestPossibleEntropy + 0.0001 && 
+        Math.abs(w.entropy - absoluteMaxEntropy) < 0.0001
+    ).slice(0, 5);
+
+    if (betterDetectors.length > 0) {
+        outputHTML += "<span class='section-header'>Strategic Max Entropy</span>";
+        betterDetectors.forEach(w => {
+            outputHTML += `!!&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+        });
+        outputHTML += "<hr>"; // THE RESPONSIVE SEPARATOR
+    }
+
+    outputHTML += "<span class='section-header'>Possible Answers</span>";
     possibleAnswers.slice(0, num).forEach((w, i) => {
         const count = i + 1;
         const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
@@ -160,8 +185,6 @@ init();
 
 [document.getElementById('guessInput'), document.getElementById('patternInput')].forEach(el => {
     el.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            handleTurn();
-        }
+        if (e.key === 'Enter') handleTurn();
     });
 });
