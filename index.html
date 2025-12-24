@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimalist Wordle Solver</title>
+    <style>
+        body { font-family: sans-serif; background: #121213; color: white; max-width: 600px; margin: auto; padding: 20px; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 10px; background: #1a1a1b; border-radius: 8px; }
+        .A { color: #6aaa64; } .O { color: #538d4e; } .X { color: #c9b458; } .Z { color: #787c7e; }
+        input, button { padding: 10px; font-size: 16px; border-radius: 4px; border: none; }
+        input { width: 60%; }
+        button { background: #538d4e; color: white; cursor: pointer; }
+        #output { white-space: pre-wrap; font-family: monospace; background: #1a1a1b; padding: 15px; margin-top: 20px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+    <h2>Wordle Solver</h2>
+    <div class="stats" id="stats">Loading words...</div>
+    
+    <div>
+        <input type="text" id="guessInput" placeholder="Enter guess (e.g. sater)">
+        <input type="text" id="patternInput" placeholder="Pattern (e.g. g-y--)">
+        <button onclick="handleTurn()">Submit Turn</button>
+    </div>
+
+    <div id="output">Top suggestions will appear here...</div>
+
+    <script src="app.js"></script>
+</body>
+</html>
