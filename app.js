@@ -25,7 +25,7 @@ async function init() {
 function generateColorPattern(answer, guess) {
     let answerArr = answer.split('');
     let guessArr = guess.split('');
-    let pattern = Array(5).fill('-');
+    let pattern = Array(5).fill('b');
     let counts = {};
     for (let char of answerArr) { counts[char] = (counts[char] || 0) + 1; }
     for (let i = 0; i < 5; i++) {
@@ -35,7 +35,7 @@ function generateColorPattern(answer, guess) {
         }
     }
     for (let i = 0; i < 5; i++) {
-        if (pattern[i] === '-' && counts[guessArr[i]] > 0) {
+        if (pattern[i] === 'b' && counts[guessArr[i]] > 0) {
             pattern[i] = 'y';
             counts[guessArr[i]]--;
         }
