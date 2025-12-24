@@ -97,16 +97,23 @@ function handleTurn() {
 
     updateStats();
     renderTopWords(20);
+
+    // --- FIX: Clear BOTH inputs after submission ---
+    document.getElementById('guessInput').value = '';
     document.getElementById('patternInput').value = '';
+    document.getElementById('guessInput').focus(); // Returns cursor to the guess box automatically
 }
+
 
 function updateStats() {
     const counts = { 'O': 0, 'X': 0, 'Z': 0 };
     possibleAnswers.forEach(w => counts[w.category]++);
+    
+    // --- FIX: Expanded Labels ---
     document.getElementById('stats').innerHTML = `
         <span>Original: ${counts.O}</span>
-        <span>Ext: ${counts.X}</span>
-        <span>Zero: ${counts.Z}</span>
+        <span>Extended: ${counts.X}</span>
+        <span>Zero-Chance: ${counts.Z}</span>
     `;
 }
 
@@ -132,7 +139,11 @@ function renderTopWords(num) {
 
     // 4. Print the standard list
     possibleAnswers.slice(0, num).forEach((w, i) => {
-        output += `${i+1}. ${w.wordString.toUpperCase()} (${w.category}) - ${w.entropy.toFixed(2)}\n`;
+        const index = i + 1;
+        // Pad the index to 2 characters so 1-9 align with 10-20
+        const paddedIndex = index.toString().padStart(2, ' '); 
+        
+        output += `${paddedIndex}. ${w.wordString.toUpperCase()} (${w.category}) - ${w.entropy.toFixed(2)}\n`;
     });
 
     document.getElementById('output').innerText = output;
