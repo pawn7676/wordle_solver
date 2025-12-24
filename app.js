@@ -8,6 +8,7 @@ class Word {
 
 let allWords = [];
 let possibleAnswers = [];
+let guessCount = 0; // New: Track rounds for automation logic
 
 async function init() {
     try {
@@ -81,29 +82,35 @@ function handleTurn() {
         return;
     }
 
-    // ggggg check (Logic from filter_by_color_pattern in Python)
     if (pattern === 'ggggg') {
         if (!possibleAnswers.some(w => w.wordString === guessStr)) {
-            alert("This word is not in the list of possible answers. Please re-enter the pattern.");
+            alert("This word is not in the list of possible answers.");
             return;
         }
         alert("Solved!");
         return;
     }
 
-    // Safety check for empty results (Logic from filter_by_color_pattern in Python)
     const filteredResults = possibleAnswers.filter(w => 
         generateColorPattern(w.wordString, guessStr) === pattern
     );
 
     if (filteredResults.length === 0) {
-        alert("No words match that color pattern. Please check your pattern and try again.");
+        alert("No words match that pattern. Please check and try again.");
         return;
     }
 
     possibleAnswers = filteredResults;
+    guessCount++; // Increment round count
+    
     updateStats();
-    document.getElementById('output').innerHTML = "<em>Stats updated. Click 'Compute Entropy' to see rankings.</em>";
+    
+    // Automation Logic: After Round 1, hide button and run automatically
+    const btn = document.getElementById('computeBtn');
+    if (guessCount > 0) {
+        btn.style.display = 'none'; // Hide the button permanently for this game
+        runFullAnalysis(); // Auto-calculate because it is now fast
+    }
 
     guessInput.value = '';
     patternInput.value = '';
@@ -123,14 +130,17 @@ function updateStats() {
 function runFullAnalysis() {
     const btn = document.getElementById('computeBtn');
     const output = document.getElementById('output');
-    btn.innerText = "Computing...";
-    btn.disabled = true;
+    
+    // Round 1 Manual Handling: Hide button immediately when clicked
+    if (guessCount === 0) {
+        btn.style.display = 'none';
+    }
+    
     output.innerHTML = "<em>Calculating entropy...</em>";
 
+    // Small delay to allow UI to hide button before heavy math starts
     setTimeout(() => {
         renderTopWords(20);
-        btn.innerText = "Compute Entropy";
-        btn.disabled = false;
     }, 50);
 }
 
@@ -138,7 +148,6 @@ function renderTopWords(num) {
     const likely = getLikelyAnswers(possibleAnswers);
     assignEntropy(likely);
 
-    // Global sort for absolute max entropy
     allWords.sort((a, b) => {
         if (Math.abs(b.entropy - a.entropy) < 0.0001) {
             if (a.category === 'O' && b.category !== 'O') return -1;
@@ -148,7 +157,6 @@ function renderTopWords(num) {
         return b.entropy - a.entropy;
     });
 
-    // Pool sort for possible answers
     possibleAnswers.sort((a, b) => a.category.localeCompare(b.category) || b.entropy - a.entropy);
 
     const bestPossibleEntropy = possibleAnswers[0].entropy;
@@ -156,18 +164,18 @@ function renderTopWords(num) {
 
     let outputHTML = "";
 
-    // Line-Cutter Logic
     const betterDetectors = allWords.filter(w => 
         w.entropy > bestPossibleEntropy + 0.0001 && 
         Math.abs(w.entropy - absoluteMaxEntropy) < 0.0001
     ).slice(0, 5);
 
     if (betterDetectors.length > 0) {
-        outputHTML += "<span class='section-header'>Strategic Max Entropy</span>";
+        // Label updated to remove 'Strategic' per instructions
+        outputHTML += "<span class='section-header'>Max Entropy</span>";
         betterDetectors.forEach(w => {
             outputHTML += `!!&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
         });
-        outputHTML += "<hr>"; // THE RESPONSIVE SEPARATOR
+        outputHTML += "<hr>";
     }
 
     outputHTML += "<span class='section-header'>Possible Answers</span>";
@@ -180,6 +188,15 @@ function renderTopWords(num) {
     document.getElementById('output').innerHTML = outputHTML;
 }
 
+// Add this to your existing reset function to restore Round 1 state
+function resetGameUI() {
+    guessCount = 0;
+    const btn = document.getElementById('computeBtn');
+    btn.style.display = 'block';
+    btn.innerText = "Max Entropy";
+    document.getElementById('output').innerHTML = "";
+    init(); // Re-load data
+}
 
 init();
 
