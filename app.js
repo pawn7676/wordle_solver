@@ -148,34 +148,18 @@ function renderTopWords(num) {
     const likely = getLikelyAnswers(possibleAnswers);
     assignEntropy(likely);
 
-    // 1. Global sort for the Max Entropy section (Absolute best detectors)
-    allWords.sort((a, b) => {
-        if (Math.abs(b.entropy - a.entropy) > 0.0001) return b.entropy - a.entropy;
-        // Tie-breaker: prefer O over others
-        if (a.category === 'O' && b.category !== 'O') return -1;
-        if (b.category === 'O' && a.category !== 'O') return 1;
-        return a.wordString.localeCompare(b.wordString);
-    });
+    // 1. Global sort for Max Entropy section
+    // Sort by entropy descending, then category
+    allWords.sort((a, b) => (b.entropy - a.entropy) || a.category.localeCompare(b.category));
 
-    // 2. The Main List Sort (Your requested logic)
-    // Parameter 1: Not 'Z' vs 'Z'
-    // Parameter 2: Entropy descending
+    // 2. Main List sort (Your preferred approach)
+    // Priority 1: Non-Z (0) comes before Z (1)
+    // Priority 2: Entropy descending
     possibleAnswers.sort((a, b) => {
         const aIsZ = a.category === 'Z' ? 1 : 0;
         const bIsZ = b.category === 'Z' ? 1 : 0;
 
-        // First Sort Parameter: Is it a 'Z'? (Non-Z comes first)
-        if (aIsZ !== bIsZ) {
-            return aIsZ - bIsZ;
-        }
-
-        // Second Sort Parameter: Entropy (Highest to Lowest)
-        if (Math.abs(b.entropy - a.entropy) > 0.0001) {
-            return b.entropy - a.entropy;
-        }
-
-        // Final tie-breaker: Alphabetical
-        return a.wordString.localeCompare(b.wordString);
+        return (aIsZ - bIsZ) || (b.entropy - a.entropy) || a.wordString.localeCompare(b.wordString);
     });
 
     const bestPossibleEntropy = possibleAnswers[0].entropy;
@@ -183,9 +167,9 @@ function renderTopWords(num) {
 
     let outputHTML = "";
 
-    // 3. Strategic Max Entropy (Line-Cutter)
+    // 3. Max Entropy Section
     const betterDetectors = allWords.filter(w => 
-        w.entropy > bestPossibleEntropy + 0.0001 && 
+        w.entropy > bestPossibleEntropy && 
         Math.abs(w.entropy - absoluteMaxEntropy) < 0.0001
     ).slice(0, 5);
 
@@ -197,12 +181,12 @@ function renderTopWords(num) {
         outputHTML += "<hr>";
     }
 
-    // 4. Display the results
+    // 4. Print the Top Results
     outputHTML += "<span class='section-header'>Possible Answers</span>";
     possibleAnswers.slice(0, num).forEach((w, i) => {
         const count = i + 1;
         const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
-        outputHTML += `${displayNum}. <span class=\"${w.category}\">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+        outputHTML += `${displayNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
     });
 
     document.getElementById('output').innerHTML = outputHTML;
