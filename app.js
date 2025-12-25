@@ -148,22 +148,42 @@ function renderTopWords(num) {
     const likely = getLikelyAnswers(possibleAnswers);
     assignEntropy(likely);
 
+    // 1. Global sort for the Max Entropy section (Absolute best detectors)
     allWords.sort((a, b) => {
-        if (Math.abs(b.entropy - a.entropy) < 0.0001) {
-            if (a.category === 'O' && b.category !== 'O') return -1;
-            if (b.category === 'O' && a.category !== 'O') return 1;
-            return a.wordString.localeCompare(b.wordString);
-        }
-        return b.entropy - a.entropy;
+        if (Math.abs(b.entropy - a.entropy) > 0.0001) return b.entropy - a.entropy;
+        // Tie-breaker: prefer O over others
+        if (a.category === 'O' && b.category !== 'O') return -1;
+        if (b.category === 'O' && a.category !== 'O') return 1;
+        return a.wordString.localeCompare(b.wordString);
     });
 
-    possibleAnswers.sort((a, b) => a.category.localeCompare(b.category) || b.entropy - a.entropy);
+    // 2. The Main List Sort (Your requested logic)
+    // Parameter 1: Not 'Z' vs 'Z'
+    // Parameter 2: Entropy descending
+    possibleAnswers.sort((a, b) => {
+        const aIsZ = a.category === 'Z' ? 1 : 0;
+        const bIsZ = b.category === 'Z' ? 1 : 0;
+
+        // First Sort Parameter: Is it a 'Z'? (Non-Z comes first)
+        if (aIsZ !== bIsZ) {
+            return aIsZ - bIsZ;
+        }
+
+        // Second Sort Parameter: Entropy (Highest to Lowest)
+        if (Math.abs(b.entropy - a.entropy) > 0.0001) {
+            return b.entropy - a.entropy;
+        }
+
+        // Final tie-breaker: Alphabetical
+        return a.wordString.localeCompare(b.wordString);
+    });
 
     const bestPossibleEntropy = possibleAnswers[0].entropy;
     const absoluteMaxEntropy = allWords[0].entropy;
 
     let outputHTML = "";
 
+    // 3. Strategic Max Entropy (Line-Cutter)
     const betterDetectors = allWords.filter(w => 
         w.entropy > bestPossibleEntropy + 0.0001 && 
         Math.abs(w.entropy - absoluteMaxEntropy) < 0.0001
@@ -177,6 +197,7 @@ function renderTopWords(num) {
         outputHTML += "<hr>";
     }
 
+    // 4. Display the results
     outputHTML += "<span class='section-header'>Possible Answers</span>";
     possibleAnswers.slice(0, num).forEach((w, i) => {
         const count = i + 1;
