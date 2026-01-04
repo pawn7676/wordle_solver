@@ -137,7 +137,7 @@ function runFullAnalysis() {
         btn.style.display = 'none';
     }
     
-    output.innerHTML = "<em>Calculating entropy...</em>";
+    output.innerHTML = "<em>Computing entropy...</em>";
 
     setTimeout(() => {
         renderTopWords(20);
