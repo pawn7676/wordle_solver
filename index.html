@@ -169,17 +169,13 @@
             const targets = likely.length > 0 ? likely : possibleAnswers;
             assignEntropy(targets);
 
-            allWords.sort((a, b) => {
-                if (Math.abs(b.entropy - a.entropy) < 0.0001) {
-                    return (RANK[a.category]) - (RANK[b.category]);
-                }
-                return b.entropy - a.entropy;
-            });
+            // 1. Sort allWords (source of 'Max Entropy' suggestions)
+            allWords.sort((a, b) => b.entropy - a.entropy);
 
+            // 2. Sort possibleAnswers, forcing 'Z' words to the end
             possibleAnswers.sort((a, b) => {
-                if (a.category !== b.category) {
-                    return (RANK[a.category]) - (RANK[b.category]);
-                }
+                if (a.category === 'Z' && b.category !== 'Z') return 1;
+                if (a.category !== 'Z' && b.category === 'Z') return -1;
                 return b.entropy - a.entropy;
             });
 
@@ -199,6 +195,19 @@
                 });
                 outputHTML += "<hr>";
             }
+
+            outputHTML += "<span class='section-header'>Possible Answers</span>";
+            
+            // 3. Render list with the alignment spacing for 1-9
+            possibleAnswers.slice(0, num).forEach((w, i) => {
+                const count = i + 1;
+                const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
+                outputHTML += `${displayNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+            });
+
+            document.getElementById('output').innerHTML = outputHTML;
+        }
+
 
             outputHTML += "<span class='section-header'>Possible Answers</span>";
             possibleAnswers.slice(0, num).forEach((w, i) => {
