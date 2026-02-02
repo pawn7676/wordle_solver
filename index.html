@@ -26,7 +26,7 @@
         #computeBtn { background: #2d5a88; }
         #output { white-space: pre-wrap; font-family: monospace; background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; line-height: 1.6; font-size: 15px; }
         hr { border: 0; height: 1px; background: #3a3a3c; margin: 15px 0; }
-        .section-header { font-weight: bold; text-transform: uppercase; font-size: 12px; color: #818384; margin-bottom: 8px; display: block; }
+        .section-header { font-weight: bold; text-transform: uppercase; font-size: 15px; color: #818384; margin-bottom: 8px; display: block; }
     </style>
 </head>
 <body>
@@ -171,14 +171,14 @@
 
             allWords.sort((a, b) => {
                 if (Math.abs(b.entropy - a.entropy) < 0.0001) {
-                    return (RANK[a.category] || 99) - (RANK[b.category] || 99);
+                    return (RANK[a.category]) - (RANK[b.category]);
                 }
                 return b.entropy - a.entropy;
             });
 
             possibleAnswers.sort((a, b) => {
                 if (a.category !== b.category) {
-                    return (RANK[a.category] || 99) - (RANK[b.category] || 99);
+                    return (RANK[a.category]) - (RANK[b.category]);
                 }
                 return b.entropy - a.entropy;
             });
