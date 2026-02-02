@@ -196,21 +196,9 @@
 
             outputHTML += "<span class='section-header'>Possible Answers</span>";
             
-            // 3. Render list with the alignment spacing for 1-9
+            // 3. Render list with the correct alignment spacing for 1-9
             possibleAnswers.slice(0, num).forEach((w, i) => {
                 const count = i + 1;
-                const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
-                outputHTML += `${displayNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
-            });
-
-            document.getElementById('output').innerHTML = outputHTML;
-        }
-
-
-            outputHTML += "<span class='section-header'>Possible Answers</span>";
-            possibleAnswers.slice(0, num).forEach((w, i) => {
-                const count = i + 1;
-                // If count is 1-9, add a leading space (&nbsp;) for alignment
                 const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
                 outputHTML += `${displayNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
             });
