@@ -159,7 +159,7 @@
         function runFullAnalysis() {
             const output = document.getElementById('output');
             output.innerHTML = "<em>Computing entropy...</em>";
-            setTimeout(() => { renderTopWords(100); }, 50);
+            setTimeout(() => { renderTopWords(99); }, 50);
         }
 
         function renderTopWords(num) {
@@ -177,18 +177,14 @@
                 return b.entropy - a.entropy;
             });
 
+            const bestPossibleAnswerEntropy = possibleAnswers[0] ? possibleAnswers[0].entropy : 0;
+
+            const maxEntropyWords = allWords.filter(w => w.entropy > bestPossibleAnswerEntropy + 0.01).slice(0, 5);
+
             let outputHTML = "";
-            const bestPossibleEntropy = possibleAnswers[0] ? possibleAnswers[0].entropy : 0;
-            const absoluteMaxEntropy = allWords[0].entropy;
-
-            const betterDetectors = allWords.filter(w => 
-                w.entropy > bestPossibleEntropy + 0.0001 && 
-                Math.abs(w.entropy - absoluteMaxEntropy) < 0.0001
-            ).slice(0, 5);
-
-            if (betterDetectors.length > 0) {
+            if (maxEntropyWords.length > 0) {
                 outputHTML += "<span class='section-header'>Max Entropy</span>";
-                betterDetectors.forEach(w => {
+                maxEntropyWords.forEach(w => {
                     outputHTML += `&nbsp;&nbsp;&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
                 });
                 outputHTML += "<hr>";
