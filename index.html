@@ -38,8 +38,8 @@
         <div class="Z">ZERO: <span id="zeroChanceCount">0</span></div>
     </div>    
     <div class="input-container">
-        <input type="text" id="guessInput" placeholder="Enter Guess" maxlength="5">
-        <input type="text" id="patternInput" placeholder="Pattern (ex: ggybb)" maxlength="5">
+        <input type="text" id="guessInput" placeholder="Guess (ex: tarse)" maxlength="5">
+        <input type="text" id="patternInput" placeholder="Color Pattern (ex: ggybb)" maxlength="5">
         <button onclick="handleTurn()">Submit Turn</button>
         <button id="computeBtn" onclick="runFullAnalysis()">Compute Entropy</button>
     </div>
@@ -158,9 +158,14 @@
 
         function runFullAnalysis() {
             const output = document.getElementById('output');
+            
+            // Hides the button immediately so it can't be clicked twice
+            document.getElementById('computeBtn').style.display = 'none'; 
+            
             output.innerHTML = "<em>Computing entropy...</em>";
             setTimeout(() => { renderTopWords(99); }, 50);
         }
+
 
         function renderTopWords(num) {
             const likely = possibleAnswers.filter(w => ['A', 'O', 'X'].includes(w.category));
