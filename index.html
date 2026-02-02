@@ -3,46 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wordle Solver (Recycled Edition)</title>
+    <title>Wordle Solver</title>
     <style>
         body { font-family: sans-serif; background: #121213; color: white; max-width: 600px; margin: auto; padding: 20px; }
-        .stats { display: flex; justify-content: space-around; align-items: center; padding: 12px 5px; background: #1a1a1b; border-radius: 8px; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
-        
-        /* Categories: A (Past), O (Original), X (Extended), Z (Zero) */
-        .A { color: #6aaa64; font-weight: bold; } 
-        .O { color: #5dade2; font-weight: bold; } 
-        .X { color: #f1c40f; font-weight: bold; } 
-        .Z { color: #ff4d4d; font-weight: bold; } 
-        
+        .stats { 
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            padding: 12px; 
+            background: #1a1a1b; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        @media (min-width: 480px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+        .A { color: #6aaa64; } .O { color: #5dade2; } .X { color: #f1c40f; } .Z { color: #ff4d4d; }
         .input-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         input { padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #3a3a3c; background: #3a3a3c; color: white; width: 100%; box-sizing: border-box; }
         button { padding: 12px; font-size: 16px; border-radius: 4px; border: none; background: #538d4e; color: white; cursor: pointer; font-weight: bold; }
-        #computeBtn { background: #2d5a88; color: white; border: none; font-weight: bold; }
-        #computeBtn:disabled { background: #3a3a3c; color: #818384; cursor: not-allowed; }
-        button:active { opacity: 0.8; }
-        
+        #computeBtn { background: #2d5a88; }
         #output { white-space: pre-wrap; font-family: monospace; background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; line-height: 1.6; font-size: 15px; }
         hr { border: 0; height: 1px; background: #3a3a3c; margin: 15px 0; }
-        .section-header { font-weight: bold; text-transform: uppercase; font-size: 13px; color: #818384; margin-bottom: 8px; display: block; }
+        .section-header { font-weight: bold; text-transform: uppercase; font-size: 12px; color: #818384; margin-bottom: 8px; display: block; }
     </style>
 </head>
 <body>
     <h1>Wordle Solver</h1>
     <div class="stats" id="stats">
-        <span class="O">ORIG: <span id="originalCount">0</span></span>
-        <span class="A">PAST: <span id="pastCount">0</span></span>
-        <span class="X">EXT: <span id="extendedCount">0</span></span>
-        <span class="Z">ZERO: <span id="zeroChanceCount">0</span></span>
+        <div class="A">ANS: <span id="answerCount">0</span></div>
+        <div class="O">ORIG: <span id="originalCount">0</span></div>
+        <div class="X">EXT: <span id="extendedCount">0</span></div>
+        <div class="Z">ZERO: <span id="zeroChanceCount">0</span></div>
     </div>    
     <div class="input-container">
         <input type="text" id="guessInput" placeholder="Enter Guess" maxlength="5">
-        <input type="text" id="patternInput" placeholder="Green = g, Yellow = y, Black = b" maxlength="5">
+        <input type="text" id="patternInput" placeholder="Pattern (ex: ggybb)" maxlength="5">
         <button onclick="handleTurn()">Submit Turn</button>
         <button id="computeBtn" onclick="runFullAnalysis()">Compute Entropy</button>
     </div>
     <div id="output">Enter a guess or click 'Compute Entropy' to begin.</div>
 
     <script>
+        const RANK = { 'A': 1, 'O': 2, 'X': 3, 'Z': 4 };
+
         class Word {
             constructor(wordString, category) {
                 this.wordString = wordString;
@@ -60,13 +65,10 @@
                 const response = await fetch('all_words.json');
                 const data = await response.json();
                 allWords = Object.entries(data).map(([word, cat]) => new Word(word, cat));
-                
-                // CRITICAL UPDATE: Category 'A' (Past Answers) are now included as possible answers
-                possibleAnswers = allWords.filter(w => w.category !== 'Z'); 
-                
+                possibleAnswers = [...allWords]; 
                 updateStats();
             } catch (e) {
-                document.getElementById('stats').innerText = "Error loading all_words.json.";
+                document.getElementById('output').innerText = "Error loading all_words.json.";
             }
         }
 
@@ -108,12 +110,6 @@
             });
         }
 
-        function getLikelyAnswers(possibles) {
-            // Include 'A' in the high-likelihood pool alongside Original and Extended
-            let likely = possibles.filter(w => w.category === 'O' || w.category === 'X' || w.category === 'A');
-            return likely.length > 0 ? likely : possibles;
-        }
-
         function handleTurn() {
             const guessInput = document.getElementById('guessInput');
             const patternInput = document.getElementById('patternInput');
@@ -131,28 +127,20 @@
                 return;
             }
 
-            if (pattern === 'ggggg') {
-                alert("Solved!");
-                return;
-            }
+            if (pattern === 'ggggg') { alert("Solved!"); return; }
 
             const filteredResults = possibleAnswers.filter(w => 
                 generateColorPattern(w.wordString, guessStr) === pattern
             );
 
-            if (filteredResults.length === 0) {
-                alert("No words match that pattern. Please check and try again.");
-                return;
-            }
+            if (filteredResults.length === 0) { alert("No words match that pattern."); return; }
 
             possibleAnswers = filteredResults;
             guessCount++;
-            
             updateStats();
             
-            const btn = document.getElementById('computeBtn');
             if (guessCount > 0) {
-                if (btn) btn.style.display = 'none'; 
+                document.getElementById('computeBtn').style.display = 'none'; 
                 runFullAnalysis(); 
             }
 
@@ -162,48 +150,44 @@
         }
 
         function updateStats() {
-            const counts = { 'O': 0, 'X': 0, 'Z': 0, 'A': 0 };
-            possibleAnswers.forEach(w => counts[w.category]++);
-            
+            const counts = { 'A': 0, 'O': 0, 'X': 0, 'Z': 0 };
+            possibleAnswers.forEach(w => { if(counts.hasOwnProperty(w.category)) counts[w.category]++; });
+            document.getElementById('answerCount').textContent = counts.A;
             document.getElementById('originalCount').textContent = counts.O;
-            document.getElementById('pastCount').textContent = counts.A;
             document.getElementById('extendedCount').textContent = counts.X;
             document.getElementById('zeroChanceCount').textContent = counts.Z;
         }
 
         function runFullAnalysis() {
-            const btn = document.getElementById('computeBtn');
             const output = document.getElementById('output');
-            
-            if (guessCount === 0 && btn) btn.style.display = 'none';
             output.innerHTML = "<em>Computing entropy...</em>";
-
-            setTimeout(() => {
-                renderTopWords(20);
-            }, 50);
+            setTimeout(() => { renderTopWords(20); }, 50);
         }
 
         function renderTopWords(num) {
-            const likely = getLikelyAnswers(possibleAnswers);
-            assignEntropy(likely);
+            const likely = possibleAnswers.filter(w => ['A', 'O', 'X'].includes(w.category));
+            const targets = likely.length > 0 ? likely : possibleAnswers;
+            assignEntropy(targets);
 
+            // Using the global RANK constant here
             allWords.sort((a, b) => {
                 if (Math.abs(b.entropy - a.entropy) < 0.0001) {
-                    // Priority: Original > Past > others
-                    if (a.category === 'O' && b.category !== 'O') return -1;
-                    if (b.category === 'O' && a.category !== 'O') return 1;
-                    if (a.category === 'A' && b.category !== 'A') return -1;
-                    return a.wordString.localeCompare(b.wordString);
+                    return (RANK[a.category] || 99) - (RANK[b.category] || 99);
                 }
                 return b.entropy - a.entropy;
             });
 
-            possibleAnswers.sort((a, b) => a.category.localeCompare(b.category) || b.entropy - a.entropy);
-
-            const bestPossibleEntropy = possibleAnswers[0] ? possibleAnswers[0].entropy : 0;
-            const absoluteMaxEntropy = allWords[0].entropy;
+            // And here
+            possibleAnswers.sort((a, b) => {
+                if (a.category !== b.category) {
+                    return (RANK[a.category] || 99) - (RANK[b.category] || 99);
+                }
+                return b.entropy - a.entropy;
+            });
 
             let outputHTML = "";
+            const bestPossibleEntropy = possibleAnswers[0] ? possibleAnswers[0].entropy : 0;
+            const absoluteMaxEntropy = allWords[0].entropy;
 
             const betterDetectors = allWords.filter(w => 
                 w.entropy > bestPossibleEntropy + 0.0001 && 
@@ -211,7 +195,7 @@
             ).slice(0, 5);
 
             if (betterDetectors.length > 0) {
-                outputHTML += "<span class='section-header'>Max Entropy (Best info)</span>";
+                outputHTML += "<span class='section-header'>Max Entropy</span>";
                 betterDetectors.forEach(w => {
                     outputHTML += `&nbsp;&nbsp;&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
                 });
@@ -220,9 +204,7 @@
 
             outputHTML += "<span class='section-header'>Possible Answers</span>";
             possibleAnswers.slice(0, num).forEach((w, i) => {
-                const count = i + 1;
-                const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
-                outputHTML += `${displayNum}. <span class=\"${w.category}\">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+                outputHTML += `${i+1}. <span class=\"${w.category}\">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
             });
 
             document.getElementById('output').innerHTML = outputHTML;
@@ -231,9 +213,7 @@
         init();
 
         [document.getElementById('guessInput'), document.getElementById('patternInput')].forEach(el => {
-            el.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') handleTurn();
-            });
+            el.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleTurn(); });
         });
     </script>
 </body>
