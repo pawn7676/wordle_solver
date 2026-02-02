@@ -161,7 +161,7 @@
         function runFullAnalysis() {
             const output = document.getElementById('output');
             output.innerHTML = "<em>Computing entropy...</em>";
-            setTimeout(() => { renderTopWords(20); }, 50);
+            setTimeout(() => { renderTopWords(100); }, 50);
         }
 
         function renderTopWords(num) {
@@ -169,7 +169,6 @@
             const targets = likely.length > 0 ? likely : possibleAnswers;
             assignEntropy(targets);
 
-            // Using the global RANK constant here
             allWords.sort((a, b) => {
                 if (Math.abs(b.entropy - a.entropy) < 0.0001) {
                     return (RANK[a.category] || 99) - (RANK[b.category] || 99);
@@ -177,7 +176,6 @@
                 return b.entropy - a.entropy;
             });
 
-            // And here
             possibleAnswers.sort((a, b) => {
                 if (a.category !== b.category) {
                     return (RANK[a.category] || 99) - (RANK[b.category] || 99);
@@ -204,7 +202,10 @@
 
             outputHTML += "<span class='section-header'>Possible Answers</span>";
             possibleAnswers.slice(0, num).forEach((w, i) => {
-                outputHTML += `${i+1}. <span class=\"${w.category}\">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+                const count = i + 1;
+                // If count is 1-9, add a leading space (&nbsp;) for alignment
+                const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
+                outputHTML += `${displayNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
             });
 
             document.getElementById('output').innerHTML = outputHTML;
