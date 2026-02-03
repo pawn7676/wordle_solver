@@ -162,20 +162,12 @@
         }
 
         function updateStats() {
-            const counts = { A: 0, O: 0, X: 0, Z: 0 };
-            
-            allWords.forEach(w => {
-                if (counts.hasOwnProperty(w.category)) {
-                    counts[w.category]++;
-                }
-            });
-
-            document.getElementById('countA').innerText = counts.A;
-            document.getElementById('countO').innerText = counts.O;
-            document.getElementById('countX').innerText = counts.X;
-            document.getElementById('countZ').innerText = counts.Z;
-            
-            document.getElementById('remainingCount').innerText = possibleAnswers.length;
+            const counts = { 'A': 0, 'O': 0, 'X': 0, 'Z': 0 };
+            possibleAnswers.forEach(w => { if(counts.hasOwnProperty(w.category)) counts[w.category]++; });
+            document.getElementById('answerCount').textContent = counts.A;
+            document.getElementById('originalCount').textContent = counts.O;
+            document.getElementById('extendedCount').textContent = counts.X;
+            document.getElementById('zeroChanceCount').textContent = counts.Z;
         }
 
         function runFullAnalysis() {
