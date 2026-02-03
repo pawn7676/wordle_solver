@@ -110,22 +110,37 @@
 
         function applyFilters() {
             const excludeRecent = document.getElementById('filterToggle').checked;
+            
+            // Always start from the full list to allow mid-game toggle re-calculations
             let filtered = allWords;
 
+            // 1. Date Filter for Past Answers
             if (excludeRecent) {
                 filtered = filtered.filter(w => !isRecentPastAnswer(w));
             }
 
-            moveHistory.forEach(turn => {
-                filtered = filtered.filter(w => 
+            // 2. Process history and validate patterns
+            for (let i = 0; i < moveHistory.length; i++) {
+                const turn = moveHistory[i];
+                const nextFiltered = filtered.filter(w => 
                     generateColorPattern(w.wordString, turn.guess) === turn.pattern
                 );
-            });
 
+                // INVALID PATTERN ALERT:
+                // If this specific turn results in 0 words, it's an impossible pattern.
+                if (nextFiltered.length === 0) {
+                    alert(`The pattern "${turn.pattern}" for "${turn.guess.toUpperCase()}" is not a valid color pattern because no words in the pool match it.`);
+                    moveHistory.pop(); // Remove the invalid turn from history
+                    return; // Stop processing and keep the previous valid state
+                }
+                
+                filtered = nextFiltered;
+            }
+
+            // Success: Update the global pool and the UI
             possibleAnswers = filtered;
             updateStats();
             
-            // Re-render results if game is in progress
             if (moveHistory.length > 0) {
                 renderTopWords(99);
             }
@@ -172,17 +187,43 @@
         function handleTurn() {
             const gInput = document.getElementById('guessInput');
             const pInput = document.getElementById('patternInput');
-            const guess = gInput.value.toLowerCase();
-            const pattern = pInput.value.toLowerCase();
+            const guess = gInput.value.toLowerCase().trim();
+            const pattern = pInput.value.toLowerCase().trim();
 
+            // 1. Length Validation
             if (guess.length !== 5 || pattern.length !== 5) {
-                alert("Enter 5 letters for both."); return;
+                alert("Please enter a 5-letter word and 5-letter color pattern.");
+                return;
             }
 
+            // 2. Character Validation (Ensures only g, y, or b are used)
+            const validChars = /^[gyb]+$/;
+            if (!validChars.test(pattern)) {
+                alert("Invalid pattern! Please use only 'g' for green, 'y' for yellow, and 'b' for black.");
+                return;
+            }
+
+            // 3. Dictionary Validation
+            const guessExists = allWords.some(w => w.wordString === guess);
+            if (!guessExists) {
+                alert(`'${guess.toUpperCase()}' is not in the word list.`);
+                return;
+            }
+
+            // 4. Solved Alert
+            if (pattern === 'ggggg') {
+                alert(`Solved! The answer is ${guess.toUpperCase()}.`);
+                return;
+            }
+
+            // Push to history and run the filter logic
             moveHistory.push({ guess, pattern });
             applyFilters();
 
-            gInput.value = ''; pInput.value = ''; gInput.focus();
+            // UI Cleanup
+            gInput.value = '';
+            pInput.value = '';
+            gInput.focus();
             document.getElementById('computeBtn').style.display = 'none';
         }
 
