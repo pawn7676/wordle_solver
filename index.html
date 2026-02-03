@@ -22,6 +22,16 @@
         .A { color: #6aaa64; } .O { color: #5dade2; } .X { color: #f1c40f; } .Z { color: #ff4d4d; }
         .input-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         input { padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #3a3a3c; background: #3a3a3c; color: white; width: 100%; box-sizing: border-box; }
+        
+        /* Toggle Styling */
+        .settings { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-size: 14px; color: #818384; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3a3a3c; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #538d4e; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
         button { padding: 12px; font-size: 16px; border-radius: 4px; border: none; background: #538d4e; color: white; cursor: pointer; font-weight: bold; }
         #computeBtn { background: #2d5a88; }
         #output { white-space: pre-wrap; font-family: monospace; background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; line-height: 1.6; font-size: 15px; }
@@ -31,12 +41,22 @@
 </head>
 <body>
     <h1>Wordle Solver</h1>
+    
+    <div class="settings">
+        <label class="switch">
+            <input type="checkbox" id="filterToggle" checked onchange="applyFilters()">
+            <span class="slider"></span>
+        </label>
+        <span>Exclude "A" words from past year</span>
+    </div>
+
     <div class="stats" id="stats">
         <div class="A">ANS: <span id="answerCount">0</span></div>
         <div class="O">ORIG: <span id="originalCount">0</span></div>
         <div class="X">EXT: <span id="extendedCount">0</span></div>
         <div class="Z">ZERO: <span id="zeroChanceCount">0</span></div>
     </div>    
+
     <div class="input-container">
         <input type="text" id="guessInput" placeholder="Guess" maxlength="5">
         <input type="text" id="patternInput" placeholder="Pattern" maxlength="5">
@@ -57,7 +77,15 @@
 
         let allWords = [];
         let possibleAnswers = [];
-        let guessCount = 0;
+        let moveHistory = []; // Tracks guesses/patterns to allow re-filtering
+
+        function isRecentPastAnswer(wordObj) {
+            if (wordObj.category !== 'A' || !wordObj.answerDate) return false;
+            const today = new Date();
+            const oneYearAgo = new Date();
+            oneYearAgo.setDate(today.getDate() - 365);
+            return wordObj.answerDate >= oneYearAgo && wordObj.answerDate < today;
+        }
 
         async function init() {
             try {
@@ -66,10 +94,36 @@
                 allWords = Object.entries(data).map(([word, info]) => {
                     return new Word(word, info.category, info.date);
                 });
-                possibleAnswers = [...allWords]; 
-                updateStats();
+                applyFilters();
             } catch (e) {
                 document.getElementById('output').innerText = "Error loading all_words.json.";
+            }
+        }
+
+        // Re-calculates possibleAnswers from scratch based on toggle and history
+        function applyFilters() {
+            const excludeRecent = document.getElementById('filterToggle').checked;
+            
+            // Start with the full list
+            let filtered = allWords;
+
+            // Apply "A" Category Date Filter
+            if (excludeRecent) {
+                filtered = filtered.filter(w => !isRecentPastAnswer(w));
+            }
+
+            // Apply all previous turns in history
+            moveHistory.forEach(turn => {
+                filtered = filtered.filter(w => 
+                    generateColorPattern(w.wordString, turn.guess) === turn.pattern
+                );
+            });
+
+            possibleAnswers = filtered;
+            updateStats();
+            
+            if (moveHistory.length > 0) {
+                runFullAnalysis();
             }
         }
 
@@ -112,42 +166,20 @@
         }
 
         function handleTurn() {
-            const guessInput = document.getElementById('guessInput');
-            const patternInput = document.getElementById('patternInput');
-            const guessStr = guessInput.value.toLowerCase();
-            const pattern = patternInput.value.toLowerCase();
+            const gInput = document.getElementById('guessInput');
+            const pInput = document.getElementById('patternInput');
+            const guess = gInput.value.toLowerCase();
+            const pattern = pInput.value.toLowerCase();
 
-            if (guessStr.length !== 5 || pattern.length !== 5) {
-                alert("Please enter a 5-letter word and 5-letter pattern. Green = g, Yellow = y, Black = b");
-                return;
+            if (guess.length !== 5 || pattern.length !== 5) {
+                alert("Enter 5 letters for both."); return;
             }
 
-            const guessObj = allWords.find(w => w.wordString === guessStr);
-            if (!guessObj) {
-                alert(`'${guessStr.toUpperCase()}' is not a valid word.`);
-                return;
-            }
+            // Store turn and trigger filter
+            moveHistory.push({ guess, pattern });
+            applyFilters();
 
-            if (pattern === 'ggggg') { alert("Solved!"); return; }
-
-            const filteredResults = possibleAnswers.filter(w => 
-                generateColorPattern(w.wordString, guessStr) === pattern
-            );
-
-            if (filteredResults.length === 0) { alert("No words match that pattern."); return; }
-
-            possibleAnswers = filteredResults;
-            guessCount++;
-            updateStats();
-            
-            if (guessCount > 0) {
-                document.getElementById('computeBtn').style.display = 'none'; 
-                runFullAnalysis(); 
-            }
-
-            guessInput.value = '';
-            patternInput.value = '';
-            guessInput.focus();
+            gInput.value = ''; pInput.value = ''; gInput.focus();
         }
 
         function updateStats() {
@@ -161,57 +193,45 @@
 
         function runFullAnalysis() {
             const output = document.getElementById('output');
-            
-            // Hides the button immediately so it can't be clicked twice
             document.getElementById('computeBtn').style.display = 'none'; 
-            
-            output.innerHTML = "<em>Computing entropy...</em>";
+            output.innerHTML = "<em>Computing...</em>";
             setTimeout(() => { renderTopWords(99); }, 50);
         }
 
-
         function renderTopWords(num) {
-            const likely = possibleAnswers.filter(w => ['A', 'O', 'X'].includes(w.category));
+            const likely = possibleAnswers.filter(w => ['O', 'X', 'A'].includes(w.category));
             const targets = likely.length > 0 ? likely : possibleAnswers;
             assignEntropy(targets);
 
-            // 1. Sort allWords (source of 'Max Entropy' suggestions)
             allWords.sort((a, b) => b.entropy - a.entropy);
-
-            // 2. Sort possibleAnswers, forcing 'Z' words to the end
             possibleAnswers.sort((a, b) => {
                 if (a.category === 'Z' && b.category !== 'Z') return 1;
                 if (a.category !== 'Z' && b.category === 'Z') return -1;
                 return b.entropy - a.entropy;
             });
 
-            const bestPossibleAnswerEntropy = possibleAnswers[0] ? possibleAnswers[0].entropy : 0;
+            const bestPossibleEntropy = possibleAnswers[0] ? possibleAnswers[0].entropy : 0;
+            const maxEntropyWords = allWords.filter(w => w.entropy > bestPossibleEntropy + 0.01).slice(0, 5);
 
-            const maxEntropyWords = allWords.filter(w => w.entropy > bestPossibleAnswerEntropy + 0.01).slice(0, 5);
-
-            let outputHTML = "";
+            let html = "";
             if (maxEntropyWords.length > 0) {
-                outputHTML += "<span class='section-header'>Max Entropy</span>";
+                html += "<span class='section-header'>Max Entropy</span>";
                 maxEntropyWords.forEach(w => {
-                    outputHTML += `&nbsp;&nbsp;&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+                    html += `&nbsp;&nbsp;&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
                 });
-                outputHTML += "<hr>";
+                html += "<hr>";
             }
 
-            outputHTML += "<span class='section-header'>Possible Answers</span>";
-            
-            // 3. Render list with the correct alignment spacing for 1-9
+            html += "<span class='section-header'>Possible Answers</span>";
             possibleAnswers.slice(0, num).forEach((w, i) => {
                 const count = i + 1;
-                const displayNum = count < 10 ? `&nbsp;${count}` : `${count}`;
-                outputHTML += `${displayNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+                const dNum = count < 10 ? `&nbsp;${count}` : `${count}`;
+                html += `${dNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
             });
-
-            document.getElementById('output').innerHTML = outputHTML;
+            document.getElementById('output').innerHTML = html;
         }
 
         init();
-
         [document.getElementById('guessInput'), document.getElementById('patternInput')].forEach(el => {
             el.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleTurn(); });
         });
