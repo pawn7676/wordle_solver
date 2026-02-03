@@ -50,7 +50,7 @@
     <div class="header-row">
         <h1>Wordle Solver</h1>
         <div class="settings">
-            <span>Filter Past Year</span>
+            <span>Filter Past 2 Years</span>
             <label class="switch">
                 <input type="checkbox" id="filterToggle" checked onchange="applyFilters()">
                 <span class="slider"></span>
@@ -90,9 +90,9 @@
         function isRecentPastAnswer(wordObj) {
             if (wordObj.category !== 'A' || !wordObj.answerDate) return false;
             const today = new Date();
-            const oneYearAgo = new Date();
-            oneYearAgo.setDate(today.getDate() - 365);
-            return wordObj.answerDate >= oneYearAgo && wordObj.answerDate < today;
+            const dateCutoff = new Date();
+            dateCutoff.setDate(today.getDate() - 700);
+            return wordObj.answerDate >= dateCutoff && wordObj.answerDate < today;
         }
 
         async function init() {
