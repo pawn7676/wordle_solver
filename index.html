@@ -47,9 +47,10 @@
 
     <script>
         class Word {
-            constructor(wordString, category) {
+            constructor(wordString, category, date) {
                 this.wordString = wordString;
                 this.category = category;
+                this.answerDate = date ? new Date(date) : null;
                 this.entropy = 0;
             }
         }
@@ -62,11 +63,24 @@
             try {
                 const response = await fetch('all_words.json');
                 const data = await response.json();
-                allWords = Object.entries(data).map(([word, cat]) => new Word(word, cat));
-                possibleAnswers = [...allWords]; 
+                
+                const cutoffDate = new Date();
+                cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
+
+                allWords = Object.entries(data).map(([word, info]) => {
+                    return new Word(word, info.category, info.date);
+                });
+
+                possibleAnswers = allWords.filter(w => {
+                    const isPossibleAnswer = ['A', 'O', 'X'].includes(w.category);
+                    const isNotRecent = !w.answerDate || w.answerDate < cutoffDate;
+                    
+                    return isPossibleAnswer && isNotRecent;
+                });
+
                 updateStats();
             } catch (e) {
-                document.getElementById('output').innerText = "Error loading all_words.json.";
+                console.error("Solver failed to initialize:", e);
             }
         }
 
