@@ -39,7 +39,7 @@
     </div>    
     <div class="input-container">
         <input type="text" id="guessInput" placeholder="Guess" maxlength="5">
-        <input type="text" id="patternInput" placeholder="Color Pattern" maxlength="5">
+        <input type="text" id="patternInput" placeholder="Pattern" maxlength="5">
         <button onclick="handleTurn()">Submit Turn</button>
         <button id="computeBtn" onclick="runFullAnalysis()">Compute Entropy</button>
     </div>
@@ -63,24 +63,13 @@
             try {
                 const response = await fetch('all_words.json');
                 const data = await response.json();
-                
-                const cutoffDate = new Date();
-                cutoffDate.setFullYear(cutoffDate.getFullYear() - 1);
-
                 allWords = Object.entries(data).map(([word, info]) => {
                     return new Word(word, info.category, info.date);
                 });
-
-                possibleAnswers = allWords.filter(w => {
-                    const isPossibleAnswer = ['A', 'O', 'X'].includes(w.category);
-                    const isNotRecent = !w.answerDate || w.answerDate < cutoffDate;
-                    
-                    return isPossibleAnswer && isNotRecent;
-                });
-
+                possibleAnswers = [...allWords]; 
                 updateStats();
             } catch (e) {
-                console.error("Solver failed to initialize:", e);
+                document.getElementById('output').innerText = "Error loading all_words.json.";
             }
         }
 
@@ -129,7 +118,7 @@
             const pattern = patternInput.value.toLowerCase();
 
             if (guessStr.length !== 5 || pattern.length !== 5) {
-                alert("Please enter a 5-letter word and 5-letter color pattern. Green = g, Yellow = y, Black = b");
+                alert("Please enter a 5-letter word and 5-letter pattern. Green = g, Yellow = y, Black = b");
                 return;
             }
 
