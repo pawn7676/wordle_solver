@@ -34,18 +34,29 @@ def update_json():
             local_data = json.load(f)
         
         if past_word in local_data:
-            if local_data[past_word] != 'A':
-                local_data[past_word] = 'A'
+            current_entry = local_data[past_word]
+            
+            # Check if we need to update:
+            # - If category isn't "A" OR
+            # - If the date is missing (null) OR
+            # - If the date is different from 'yesterday'
+            needs_update = (current_entry.get('category') != 'A' or 
+                            current_entry.get('date') != yesterday)
+
+            if needs_update:
+                local_data[past_word]['category'] = 'A'
+                local_data[past_word]['date'] = yesterday
+                
                 with open('all_words.json', 'w') as f:
                     json.dump(local_data, f, indent=4)
-                print(f"SUCCESS: Moved '{past_word.upper()}' to Category A.")
+                print(f"SUCCESS: Updated '{past_word.upper()}' to Category A with date {yesterday}.")
             else:
-                print(f"NOTICE: '{past_word.upper()}' was already archived.")
+                print(f"NOTICE: '{past_word.upper()}' is already up-to-date (Category A, Date: {yesterday}).")
         else:
-            print(f"WARNING: '{past_word.upper()}' not found in dictionary.")
+            print(f"ERROR: '{past_word.upper()}' not found in local dictionary.")
 
     except Exception as e:
-        print(f"CRITICAL ERROR: {e}")
+        print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
     update_json()
