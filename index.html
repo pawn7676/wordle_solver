@@ -27,13 +27,49 @@
         .A { color: #6aaa64; } .O { color: #5dade2; } .X { color: #f1c40f; } .Z { color: #ff4d4d; }
         
         /* Toggle Switch Styling */
-        .settings { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #818384; text-transform: uppercase; font-weight: bold; }
-        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+
+        .settings { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 11px; 
+            color: #818384; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+        }
+
+        .switch { 
+            position: relative; 
+            display: inline-block; 
+            width: 32px;
+            height: 18px; 
+        }
+
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3a3a3c; transition: .4s; border-radius: 18px; }
-        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+
+        .slider { 
+            position: absolute; 
+            cursor: pointer; 
+            top: 0; left: 0; right: 0; bottom: 0; 
+            background-color: #3a3a3c; 
+            transition: .4s; 
+            border-radius: 18px; 
+        }
+
+        .slider:before { 
+            position: absolute; 
+            content: ""; 
+            height: 12px; 
+            width: 12px; 
+            left: 3px; 
+            bottom: 3px; 
+            background-color: white; 
+            transition: 0.3s; 
+            border-radius: 50%; 
+        }
+
         input:checked + .slider { background-color: #538d4e; }
-        input:checked + .slider:before { transform: translateX(16px); }
+        input:checked + .slider:before { transform: translateX(14px); }
 
         .input-container { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
         input[type="text"] { padding: 12px; font-size: 16px; border-radius: 4px; border: 1px solid #3a3a3c; background: #3a3a3c; color: white; width: 100%; box-sizing: border-box; }
