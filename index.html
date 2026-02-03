@@ -38,8 +38,8 @@
         <div class="Z">ZERO: <span id="zeroChanceCount">0</span></div>
     </div>    
     <div class="input-container">
-        <input type="text" id="guessInput" placeholder="Guess (ex: tarse)" maxlength="5">
-        <input type="text" id="patternInput" placeholder="Color Pattern (ex: ggybb)" maxlength="5">
+        <input type="text" id="guessInput" placeholder="Guess" maxlength="5">
+        <input type="text" id="patternInput" placeholder="Color Pattern" maxlength="5">
         <button onclick="handleTurn()">Submit Turn</button>
         <button id="computeBtn" onclick="runFullAnalysis()">Compute Entropy</button>
     </div>
@@ -129,7 +129,7 @@
             const pattern = patternInput.value.toLowerCase();
 
             if (guessStr.length !== 5 || pattern.length !== 5) {
-                alert("Please enter a 5-letter word and 5-letter pattern.");
+                alert("Please enter a 5-letter word and 5-letter color pattern. Green = g, Yellow = y, Black = b");
                 return;
             }
 
@@ -162,12 +162,20 @@
         }
 
         function updateStats() {
-            const counts = { 'A': 0, 'O': 0, 'X': 0, 'Z': 0 };
-            possibleAnswers.forEach(w => { if(counts.hasOwnProperty(w.category)) counts[w.category]++; });
-            document.getElementById('answerCount').textContent = counts.A;
-            document.getElementById('originalCount').textContent = counts.O;
-            document.getElementById('extendedCount').textContent = counts.X;
-            document.getElementById('zeroChanceCount').textContent = counts.Z;
+            const counts = { A: 0, O: 0, X: 0, Z: 0 };
+            
+            allWords.forEach(w => {
+                if (counts.hasOwnProperty(w.category)) {
+                    counts[w.category]++;
+                }
+            });
+
+            document.getElementById('countA').innerText = counts.A;
+            document.getElementById('countO').innerText = counts.O;
+            document.getElementById('countX').innerText = counts.X;
+            document.getElementById('countZ').innerText = counts.Z;
+            
+            document.getElementById('remainingCount').innerText = possibleAnswers.length;
         }
 
         function runFullAnalysis() {
