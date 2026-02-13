@@ -270,9 +270,17 @@
 
         init();
 
+        // Switch focus to the Pattern box if 5 characters are entered into Guess box
         document.getElementById('guessInput').addEventListener('input', (e) => {
             if (e.target.value.length === 5) {
                 document.getElementById('patternInput').focus();
+            }
+        });
+
+        // Jump back to Guess box if Backspace is pressed on an empty Pattern box
+        document.getElementById('patternInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace' && e.target.value.length === 0) {
+                document.getElementById('guessInput').focus();
             }
         });
 
