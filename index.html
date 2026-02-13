@@ -50,7 +50,7 @@
     <div class="header-row">
         <h1>Wordle Solver</h1>
         <div class="settings">
-            <span>Filter Out Recent 1000</span>
+            <span>Exclude Past Answers</span>
             <label class="switch">
                 <input type="checkbox" id="filterToggle" checked onchange="applyFilters()">
                 <span class="slider"></span>
@@ -87,14 +87,6 @@
         let possibleAnswers = [];
         let moveHistory = [];
 
-        function isRecentPastAnswer(wordObj) {
-            if (wordObj.category !== 'A' || !wordObj.answerDate) return false;
-            const today = new Date();
-            const dateCutoff = new Date();
-            dateCutoff.setDate(today.getDate() - 1000);
-            return wordObj.answerDate >= dateCutoff && wordObj.answerDate < today;
-        }
-
         async function init() {
             try {
                 const response = await fetch('all_words.json');
@@ -109,14 +101,14 @@
         }
 
         function applyFilters() {
-            const excludeRecent = document.getElementById('filterToggle').checked;
+            const excludePastAnswers = document.getElementById('filterToggle').checked;
             
             // Always start from the full list to allow mid-game toggle re-calculations
             let filtered = allWords;
 
-            // 1. Date Filter for Past Answers
-            if (excludeRecent) {
-                filtered = filtered.filter(w => !isRecentPastAnswer(w));
+            // 1. Filter Out Past Answers
+            if (excludePastAnswers) {
+                filtered = filtered.filter(w => w.category !== 'A');
             }
 
             // 2. Process history and validate patterns
