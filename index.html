@@ -178,8 +178,9 @@
 
         function handleTurn() {
             const gInput = document.getElementById('guessInput');
-            const pInput = document.getElementById('patternInput');
             const guess = gInput.value.toLowerCase().trim();
+
+            const pInput = document.getElementById('patternInput');
             const pattern = pInput.value.toLowerCase().trim();
 
             // 1. Length Validation
@@ -268,6 +269,13 @@
         }
 
         init();
+
+        document.getElementById('guessInput').addEventListener('input', (e) => {
+            if (e.target.value.length === 5) {
+                document.getElementById('patternInput').focus();
+            }
+        });
+
         [document.getElementById('guessInput'), document.getElementById('patternInput')].forEach(el => {
             el.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleTurn(); });
         });
