@@ -280,6 +280,7 @@
         // Jump back to Guess box if Backspace is pressed on an empty Pattern box
         document.getElementById('patternInput').addEventListener('keydown', (e) => {
             if (e.key === 'Backspace' && e.target.value.length === 0) {
+                e.preventDefault();
                 document.getElementById('guessInput').focus();
             }
         });
