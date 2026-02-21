@@ -41,39 +41,40 @@
         
         #output { background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; font-size: 14px; }
         
-        /* Updated Grid Layout: Rank(40) + Word(120) = 160px for Header Section */
+        /* FULL WIDTH GRID: Rank (40px) | Word (Flex) | Entropy (Flex) | Years (Flex) */
         .word-row { 
             display: grid; 
-            grid-template-columns: 40px 120px 90px 70px; 
-            gap: 0; 
+            grid-template-columns: 40px 1.5fr 1fr 1fr; 
+            gap: 10px; 
             align-items: center;
-            padding: 2px 0;
+            padding: 3px 0;
             font-family: monospace;
         }
 
-        /* Center justify data in Entropy and Years columns */
+        /* HEADER GRID: Label (Rank + Word space) | Entropy | Years */
+        .header-row-grid { 
+            display: grid; 
+            grid-template-columns: calc(40px + 1.5fr + 10px) 1fr 1fr; 
+            gap: 10px; 
+            font-weight: bold; 
+            color: #818384; 
+            text-transform: uppercase; 
+            font-size: 16px; /* Slightly bigger font */
+            padding-bottom: 10px;
+            border-bottom: 1px solid #3a3a3c;
+            margin-bottom: 10px;
+            white-space: nowrap;
+        }
+
+        /* Center-justify Entropy and Years columns */
         .word-row div:nth-child(3), 
         .word-row div:nth-child(4),
         .header-row-grid div:nth-child(2),
         .header-row-grid div:nth-child(3) {
             text-align: center;
         }
-        
-        .header-row-grid { 
-            display: grid; 
-            grid-template-columns: 160px 90px 70px; 
-            gap: 0; 
-            font-weight: bold; 
-            color: #818384; 
-            text-transform: uppercase; 
-            font-size: 15px; /* Increased font size */
-            padding-bottom: 8px;
-            border-bottom: 1px solid #3a3a3c;
-            margin-bottom: 8px;
-            white-space: nowrap;
-        }
 
-        hr { border: 0; height: 1px; background: #3a3a3c; margin: 15px 0; }
+        hr { border: 0; height: 1px; background: #3a3a3c; margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -135,18 +136,15 @@
             const excludePastAnswers = document.getElementById('filterToggle').checked;
             let filtered = allWords;
 
-            if (excludePastAnswers) {
-                filtered = filtered.filter(w => w.category !== 'A');
-            }
+            if (excludePastAnswers) filtered = filtered.filter(w => w.category !== 'A');
 
             for (let i = 0; i < moveHistory.length; i++) {
                 const turn = moveHistory[i];
                 const nextFiltered = filtered.filter(w => 
                     generateColorPattern(w.wordString, turn.guess) === turn.pattern
                 );
-
                 if (nextFiltered.length === 0) {
-                    alert(`The pattern "${turn.pattern}" for "${turn.guess.toUpperCase()}" is invalid.`);
+                    alert(`Invalid pattern.`);
                     moveHistory.pop();
                     return;
                 }
@@ -155,29 +153,18 @@
 
             possibleAnswers = filtered;
             updateStats();
-            
-            if (moveHistory.length > 0) {
-                renderTopWords(99);
-            }
+            if (moveHistory.length > 0) renderTopWords(99);
         }
 
         function generateColorPattern(answer, guess) {
-            let answerArr = answer.split('');
-            let guessArr = guess.split('');
-            let pattern = Array(5).fill('b');
-            let counts = {};
-            for (let char of answerArr) { counts[char] = (counts[char] || 0) + 1; }
+            let answerArr = answer.split(''), guessArr = guess.split('');
+            let pattern = Array(5).fill('b'), counts = {};
+            for (let char of answerArr) counts[char] = (counts[char] || 0) + 1;
             for (let i = 0; i < 5; i++) {
-                if (guessArr[i] === answerArr[i]) {
-                    pattern[i] = 'g';
-                    counts[guessArr[i]]--;
-                }
+                if (guessArr[i] === answerArr[i]) { pattern[i] = 'g'; counts[guessArr[i]]--; }
             }
             for (let i = 0; i < 5; i++) {
-                if (pattern[i] === 'b' && counts[guessArr[i]] > 0) {
-                    pattern[i] = 'y';
-                    counts[guessArr[i]]--;
-                }
+                if (pattern[i] === 'b' && counts[guessArr[i]] > 0) { pattern[i] = 'y'; counts[guessArr[i]]--; }
             }
             return pattern.join('');
         }
@@ -189,8 +176,7 @@
                     let p = generateColorPattern(answer.wordString, guess.wordString);
                     patternMap[p] = (patternMap[p] || 0) + 1;
                 });
-                let entropy = 0;
-                const total = likelyAnswers.length;
+                let entropy = 0, total = likelyAnswers.length;
                 for (let count of Object.values(patternMap)) {
                     let prob = count / total;
                     entropy -= prob * Math.log2(prob);
@@ -200,27 +186,14 @@
         }
 
         function handleTurn() {
-            const gInput = document.getElementById('guessInput');
-            const guess = gInput.value.toLowerCase().trim();
-            const pInput = document.getElementById('patternInput');
-            const pattern = pInput.value.toLowerCase().trim();
-
+            const gInput = document.getElementById('guessInput'), pInput = document.getElementById('patternInput');
+            const guess = gInput.value.toLowerCase().trim(), pattern = pInput.value.toLowerCase().trim();
             if (guess.length !== 5 || pattern.length !== 5) return;
-
-            const validChars = /^[gyb]+$/;
-            if (!validChars.test(pattern)) return;
-
-            if (pattern === 'ggggg') {
-                alert(`Solved! The answer is ${guess.toUpperCase()}.`);
-                return;
-            }
+            if (pattern === 'ggggg') { alert(`Solved! ${guess.toUpperCase()}`); return; }
 
             moveHistory.push({ guess, pattern });
             applyFilters();
-
-            gInput.value = '';
-            pInput.value = '';
-            gInput.focus();
+            gInput.value = ''; pInput.value = ''; gInput.focus();
             document.getElementById('computeBtn').style.display = 'none';
         }
 
@@ -242,8 +215,7 @@
         function getYearsSince(wordObj) {
             if (wordObj.category === 'A' && wordObj.answerDate) {
                 const diffTime = Math.abs(CURRENT_DATE - wordObj.answerDate);
-                const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25);
-                return diffYears.toFixed(1);
+                return (diffTime / (1000 * 60 * 60 * 24 * 365.25)).toFixed(1);
             }
             return "";
         }
@@ -258,14 +230,12 @@
         }
 
         function getWordRowHtml(w, index) {
-            const rank = index !== null ? index + 1 : "";
-            const years = getYearsSince(w);
             return `
                 <div class="word-row">
-                    <div>${rank}</div>
+                    <div>${index + 1}</div>
                     <div class="${w.category}">${w.wordString.toUpperCase()}</div>
                     <div>${w.entropy.toFixed(2)}</div>
-                    <div>${years}</div>
+                    <div>${getYearsSince(w)}</div>
                 </div>`;
         }
 
@@ -285,19 +255,14 @@
             const maxEntropyWords = allWords.filter(w => w.entropy > bestPossibleEntropy + 0.01).slice(0, 5);
 
             let html = "";
-            
             if (maxEntropyWords.length > 0) {
                 html += getHeaderHtml("MAX ENTROPY");
-                maxEntropyWords.forEach(w => {
-                    html += getWordRowHtml(w, null);
-                });
+                maxEntropyWords.forEach((w, i) => html += getWordRowHtml(w, i));
                 html += "<hr>";
             }
 
             html += getHeaderHtml("POSSIBLE ANSWERS");
-            possibleAnswers.slice(0, num).forEach((w, i) => {
-                html += getWordRowHtml(w, i);
-            });
+            possibleAnswers.slice(0, num).forEach((w, i) => html += getWordRowHtml(w, i));
             document.getElementById('output').innerHTML = html;
         }
 
