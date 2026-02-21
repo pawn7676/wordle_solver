@@ -41,28 +41,36 @@
         
         #output { background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; font-size: 14px; }
         
-        /* Updated Grid Layout for tighter spacing */
+        /* Updated Grid Layout: Rank(40) + Word(120) = 160px for Header Section */
         .word-row { 
             display: grid; 
-            grid-template-columns: 30px 80px 80px 60px; 
+            grid-template-columns: 40px 120px 90px 70px; 
             gap: 0; 
             align-items: center;
             padding: 2px 0;
             font-family: monospace;
         }
+
+        /* Center justify data in Entropy and Years columns */
+        .word-row div:nth-child(3), 
+        .word-row div:nth-child(4),
+        .header-row-grid div:nth-child(2),
+        .header-row-grid div:nth-child(3) {
+            text-align: center;
+        }
         
-        /* Header grid aligned with the row columns */
         .header-row-grid { 
             display: grid; 
-            grid-template-columns: 110px 80px 60px; /* Title spans first two columns (30+80) */
+            grid-template-columns: 160px 90px 70px; 
             gap: 0; 
             font-weight: bold; 
             color: #818384; 
             text-transform: uppercase; 
-            font-size: 12px;
+            font-size: 15px; /* Increased font size */
             padding-bottom: 8px;
             border-bottom: 1px solid #3a3a3c;
             margin-bottom: 8px;
+            white-space: nowrap;
         }
 
         hr { border: 0; height: 1px; background: #3a3a3c; margin: 15px 0; }
@@ -250,7 +258,7 @@
         }
 
         function getWordRowHtml(w, index) {
-            const rank = index !== null ? index + 1 : ""; // Removed the dash
+            const rank = index !== null ? index + 1 : "";
             const years = getYearsSince(w);
             return `
                 <div class="word-row">
