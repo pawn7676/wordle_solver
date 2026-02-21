@@ -213,24 +213,35 @@
         }
 
         function renderTopWords(num) {
-            const targets = possibleAnswers.filter(w => ['O', 'X', 'A'].includes(w.category));
-            assignEntropy(targets.length > 0 ? targets : possibleAnswers);
-            
-            allWords.sort((a, b) => b.entropy - a.entropy);
-            possibleAnswers.sort((a, b) => b.entropy - a.entropy);
+            const likely = possibleAnswers.filter(w => ['O', 'X', 'A'].includes(w.category));
+            const targets = likely.length > 0 ? likely : possibleAnswers;
+            assignEntropy(targets);
 
-            const bestPossible = possibleAnswers[0] ? possibleAnswers[0].entropy : 0;
-            const maxEntropyWords = allWords.filter(w => w.entropy > bestPossible + 0.01).slice(0, 5);
+            allWords.sort((a, b) => b.entropy - a.entropy);
+            possibleAnswers.sort((a, b) => {
+                if (a.category === 'Z' && b.category !== 'Z') return 1;
+                if (a.category !== 'Z' && b.category === 'Z') return -1;
+                return b.entropy - a.entropy;
+            });
+
+            const bestPossibleEntropy = possibleAnswers[0] ? possibleAnswers[0].entropy : 0;
+            const maxEntropyWords = allWords.filter(w => w.entropy > bestPossibleEntropy + 0.01).slice(0, 5);
 
             let html = "";
             if (maxEntropyWords.length > 0) {
-                html += getHeaderHtml("Max Entropy");
-                maxEntropyWords.forEach((w, i) => html += getWordRow(w, i));
+                html += "<span class='section-header'>Max Entropy</span>";
+                maxEntropyWords.forEach(w => {
+                    html += `&nbsp;&nbsp;&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+                });
                 html += "<hr>";
             }
 
-            html += getHeaderHtml("Possible Answers");
-            possibleAnswers.slice(0, num).forEach((w, i) => html += getWordRow(w, i));
+            html += "<span class='section-header'>Possible Answers</span>";
+            possibleAnswers.slice(0, num).forEach((w, i) => {
+                const count = i + 1;
+                const dNum = count < 10 ? `&nbsp;${count}` : `${count}`;
+                html += `${dNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+            });
             document.getElementById('output').innerHTML = html;
         }
 
