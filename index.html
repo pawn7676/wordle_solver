@@ -7,7 +7,6 @@
     <style>
         body { font-family: sans-serif; background: #121213; color: white; max-width: 600px; margin: auto; padding: 20px; }
         
-        /* Layout: Title on left, Toggle on right */
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         h1 { margin: 0; font-size: 24px; }
 
@@ -26,7 +25,6 @@
         @media (min-width: 480px) { .stats { grid-template-columns: repeat(4, 1fr); } }
         .A { color: #6aaa64; } .O { color: #5dade2; } .X { color: #f1c40f; } .Z { color: #ff4d4d; }
         
-        /* Toggle Switch Styling */
         .settings { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #818384; text-transform: uppercase; font-weight: bold; }
         .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -41,7 +39,30 @@
         button { padding: 12px; font-size: 16px; border-radius: 4px; border: none; background: #538d4e; color: white; cursor: pointer; font-weight: bold; }
         #computeBtn { background: #2d5a88; }
         
-        #output { white-space: pre-wrap; font-family: monospace; background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; line-height: 1.6; font-size: 15px; }
+        #output { background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; font-size: 14px; }
+        
+        /* Grid Layout for Word Rows and Headers */
+        .word-row { 
+            display: grid; 
+            grid-template-columns: 40px 1fr 80px 60px; 
+            gap: 10px; 
+            align-items: center;
+            padding: 4px 0;
+            font-family: monospace;
+        }
+        .header-row-grid { 
+            display: grid; 
+            grid-template-columns: 40px 1fr 80px 60px; 
+            gap: 10px; 
+            font-weight: bold; 
+            color: #818384; 
+            text-transform: uppercase; 
+            font-size: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #3a3a3c;
+            margin-bottom: 8px;
+        }
+
         hr { border: 0; height: 1px; background: #3a3a3c; margin: 15px 0; }
         .section-header { font-weight: bold; text-transform: uppercase; font-size: 15px; color: #818384; margin-bottom: 8px; display: block; }
     </style>
@@ -86,6 +107,7 @@
         let allWords = [];
         let possibleAnswers = [];
         let moveHistory = [];
+        const CURRENT_DATE = new Date("2026-02-21");
 
         async function init() {
             try {
@@ -102,34 +124,26 @@
 
         function applyFilters() {
             const excludePastAnswers = document.getElementById('filterToggle').checked;
-            
-            // Always start from the full list to allow mid-game toggle re-calculations
             let filtered = allWords;
 
-            // 1. Filter Out Past Answers
             if (excludePastAnswers) {
                 filtered = filtered.filter(w => w.category !== 'A');
             }
 
-            // 2. Process history and validate patterns
             for (let i = 0; i < moveHistory.length; i++) {
                 const turn = moveHistory[i];
                 const nextFiltered = filtered.filter(w => 
                     generateColorPattern(w.wordString, turn.guess) === turn.pattern
                 );
 
-                // INVALID PATTERN ALERT:
-                // If this specific turn results in 0 words, it's an impossible pattern.
                 if (nextFiltered.length === 0) {
-                    alert(`The pattern "${turn.pattern}" for "${turn.guess.toUpperCase()}" is not a valid color pattern because no words in the pool match it.`);
-                    moveHistory.pop(); // Remove the invalid turn from history
-                    return; // Stop processing and keep the previous valid state
+                    alert(`The pattern "${turn.pattern}" for "${turn.guess.toUpperCase()}" is not a valid color pattern.`);
+                    moveHistory.pop();
+                    return;
                 }
-                
                 filtered = nextFiltered;
             }
 
-            // Success: Update the global pool and the UI
             possibleAnswers = filtered;
             updateStats();
             
@@ -179,41 +193,34 @@
         function handleTurn() {
             const gInput = document.getElementById('guessInput');
             const guess = gInput.value.toLowerCase().trim();
-
             const pInput = document.getElementById('patternInput');
             const pattern = pInput.value.toLowerCase().trim();
 
-            // 1. Length Validation
             if (guess.length !== 5 || pattern.length !== 5) {
                 alert("Please enter a 5-letter word and 5-letter color pattern.");
                 return;
             }
 
-            // 2. Character Validation (Ensures only g, y, or b are used)
             const validChars = /^[gyb]+$/;
             if (!validChars.test(pattern)) {
-                alert("Invalid pattern! Please use only 'g' for green, 'y' for yellow, and 'b' for black.");
+                alert("Invalid pattern! Use 'g', 'y', or 'b'.");
                 return;
             }
 
-            // 3. Dictionary Validation
             const guessExists = allWords.some(w => w.wordString === guess);
             if (!guessExists) {
                 alert(`'${guess.toUpperCase()}' is not in the word list.`);
                 return;
             }
 
-            // 4. Solved Alert
             if (pattern === 'ggggg') {
                 alert(`Solved! The answer is ${guess.toUpperCase()}.`);
                 return;
             }
 
-            // Push to history and run the filter logic
             moveHistory.push({ guess, pattern });
             applyFilters();
 
-            // UI Cleanup
             gInput.value = '';
             pInput.value = '';
             gInput.focus();
@@ -235,6 +242,37 @@
             setTimeout(() => { renderTopWords(99); }, 50);
         }
 
+        function getYearsSince(wordObj) {
+            if (wordObj.category === 'A' && wordObj.answerDate) {
+                const diffTime = Math.abs(CURRENT_DATE - wordObj.answerDate);
+                const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25);
+                return diffYears.toFixed(1);
+            }
+            return "";
+        }
+
+        function getHeaderHtml() {
+            return `
+                <div class="header-row-grid">
+                    <div>#</div>
+                    <div>Word</div>
+                    <div>Entropy</div>
+                    <div>Years</div>
+                </div>`;
+        }
+
+        function getWordRowHtml(w, index) {
+            const rank = index !== null ? index + 1 : "-";
+            const years = getYearsSince(w);
+            return `
+                <div class="word-row">
+                    <div>${rank}</div>
+                    <div class="${w.category}">${w.wordString.toUpperCase()}</div>
+                    <div>${w.entropy.toFixed(2)}</div>
+                    <div>${years}</div>
+                </div>`;
+        }
+
         function renderTopWords(num) {
             const likely = possibleAnswers.filter(w => ['O', 'X', 'A'].includes(w.category));
             const targets = likely.length > 0 ? likely : possibleAnswers;
@@ -251,33 +289,30 @@
             const maxEntropyWords = allWords.filter(w => w.entropy > bestPossibleEntropy + 0.01).slice(0, 5);
 
             let html = "";
+            
             if (maxEntropyWords.length > 0) {
                 html += "<span class='section-header'>Max Entropy</span>";
+                html += getHeaderHtml();
                 maxEntropyWords.forEach(w => {
-                    html += `&nbsp;&nbsp;&nbsp;&nbsp;<span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+                    html += getWordRowHtml(w, null);
                 });
                 html += "<hr>";
             }
 
             html += "<span class='section-header'>Possible Answers</span>";
+            html += getHeaderHtml();
             possibleAnswers.slice(0, num).forEach((w, i) => {
-                const count = i + 1;
-                const dNum = count < 10 ? `&nbsp;${count}` : `${count}`;
-                html += `${dNum}. <span class="${w.category}">${w.wordString.toUpperCase()}</span> - ${w.entropy.toFixed(2)}<br>`;
+                html += getWordRowHtml(w, i);
             });
             document.getElementById('output').innerHTML = html;
         }
 
         init();
 
-        // Switch focus to the Pattern box if 5 characters are entered into Guess box
         document.getElementById('guessInput').addEventListener('input', (e) => {
-            if (e.target.value.length === 5) {
-                document.getElementById('patternInput').focus();
-            }
+            if (e.target.value.length === 5) document.getElementById('patternInput').focus();
         });
 
-        // Jump back to Guess box if Backspace is pressed on an empty Pattern box
         document.getElementById('patternInput').addEventListener('keydown', (e) => {
             if (e.key === 'Backspace' && e.target.value.length === 0) {
                 e.preventDefault();
