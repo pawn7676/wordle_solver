@@ -41,7 +41,6 @@
         
         #output { background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; font-size: 15px; font-family: monospace; }
         
-        /* Fixed-width layout for perfect alignment */
         .row-container { display: flex; align-items: center; padding: 2px 0; width: 100%; }
         .col-rank { width: 35px; color: #818384; }
         .col-word { width: 180px; font-weight: bold; }
@@ -59,8 +58,7 @@
             font-size: 16px;
             text-transform: uppercase;
         }
-        /* Header specific column widths to match data */
-        .head-title { width: 215px; } /* Combined rank + word space */
+        .head-title { width: 215px; }
         .head-entropy { width: 100px; text-align: center; }
         .head-years { width: 80px; text-align: center; }
 
@@ -217,9 +215,15 @@
             assignEntropy(targets.length > 0 ? targets : possibleAnswers);
             
             allWords.sort((a, b) => b.entropy - a.entropy);
-            possibleAnswers.sort((a, b) => b.entropy - a.entropy);
 
-            const bestPossible = possibleAnswers[0] ? possibleAnswers[0].entropy : 0;
+            // UPDATED SORTING: Push 'Z' (Zero chance) words to the very bottom
+            possibleAnswers.sort((a, b) => {
+                if (a.category === 'Z' && b.category !== 'Z') return 1;
+                if (a.category !== 'Z' && b.category === 'Z') return -1;
+                return b.entropy - a.entropy; // Keep entropy sort within same priority group
+            });
+
+            const bestPossible = possibleAnswers[0] && possibleAnswers[0].category !== 'Z' ? possibleAnswers[0].entropy : 0;
             const maxEntropyWords = allWords.filter(w => w.entropy > bestPossible + 0.01).slice(0, 5);
 
             let html = "";
