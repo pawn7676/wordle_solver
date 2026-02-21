@@ -41,19 +41,21 @@
         
         #output { background: #1a1a1b; padding: 15px; margin-top: 10px; border-radius: 8px; font-size: 14px; }
         
-        /* Grid Layout for Word Rows and Headers */
+        /* Updated Grid Layout for tighter spacing */
         .word-row { 
             display: grid; 
-            grid-template-columns: 40px 1fr 80px 60px; 
-            gap: 10px; 
+            grid-template-columns: 30px 80px 80px 60px; 
+            gap: 0; 
             align-items: center;
-            padding: 4px 0;
+            padding: 2px 0;
             font-family: monospace;
         }
+        
+        /* Header grid aligned with the row columns */
         .header-row-grid { 
             display: grid; 
-            grid-template-columns: 40px 1fr 80px 60px; 
-            gap: 10px; 
+            grid-template-columns: 110px 80px 60px; /* Title spans first two columns (30+80) */
+            gap: 0; 
             font-weight: bold; 
             color: #818384; 
             text-transform: uppercase; 
@@ -64,7 +66,6 @@
         }
 
         hr { border: 0; height: 1px; background: #3a3a3c; margin: 15px 0; }
-        .section-header { font-weight: bold; text-transform: uppercase; font-size: 15px; color: #818384; margin-bottom: 8px; display: block; }
     </style>
 </head>
 <body>
@@ -137,7 +138,7 @@
                 );
 
                 if (nextFiltered.length === 0) {
-                    alert(`The pattern "${turn.pattern}" for "${turn.guess.toUpperCase()}" is not a valid color pattern.`);
+                    alert(`The pattern "${turn.pattern}" for "${turn.guess.toUpperCase()}" is invalid.`);
                     moveHistory.pop();
                     return;
                 }
@@ -196,22 +197,10 @@
             const pInput = document.getElementById('patternInput');
             const pattern = pInput.value.toLowerCase().trim();
 
-            if (guess.length !== 5 || pattern.length !== 5) {
-                alert("Please enter a 5-letter word and 5-letter color pattern.");
-                return;
-            }
+            if (guess.length !== 5 || pattern.length !== 5) return;
 
             const validChars = /^[gyb]+$/;
-            if (!validChars.test(pattern)) {
-                alert("Invalid pattern! Use 'g', 'y', or 'b'.");
-                return;
-            }
-
-            const guessExists = allWords.some(w => w.wordString === guess);
-            if (!guessExists) {
-                alert(`'${guess.toUpperCase()}' is not in the word list.`);
-                return;
-            }
+            if (!validChars.test(pattern)) return;
 
             if (pattern === 'ggggg') {
                 alert(`Solved! The answer is ${guess.toUpperCase()}.`);
@@ -251,18 +240,17 @@
             return "";
         }
 
-        function getHeaderHtml() {
+        function getHeaderHtml(title) {
             return `
                 <div class="header-row-grid">
-                    <div>#</div>
-                    <div>Word</div>
-                    <div>Entropy</div>
-                    <div>Years</div>
+                    <div>${title}</div>
+                    <div>ENTROPY</div>
+                    <div>YEARS</div>
                 </div>`;
         }
 
         function getWordRowHtml(w, index) {
-            const rank = index !== null ? index + 1 : "-";
+            const rank = index !== null ? index + 1 : ""; // Removed the dash
             const years = getYearsSince(w);
             return `
                 <div class="word-row">
@@ -291,16 +279,14 @@
             let html = "";
             
             if (maxEntropyWords.length > 0) {
-                html += "<span class='section-header'>Max Entropy</span>";
-                html += getHeaderHtml();
+                html += getHeaderHtml("MAX ENTROPY");
                 maxEntropyWords.forEach(w => {
                     html += getWordRowHtml(w, null);
                 });
                 html += "<hr>";
             }
 
-            html += "<span class='section-header'>Possible Answers</span>";
-            html += getHeaderHtml();
+            html += getHeaderHtml("POSSIBLE ANSWERS");
             possibleAnswers.slice(0, num).forEach((w, i) => {
                 html += getWordRowHtml(w, i);
             });
