@@ -7424,8 +7424,8 @@
         "date": null
     },
     "buyer": {
-        "category": "O",
-        "date": null
+        "category": "A",
+        "date": "2026-02-24"
     },
     "buyin": {
         "category": "Z",
