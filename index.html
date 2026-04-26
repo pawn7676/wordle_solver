@@ -22,8 +22,8 @@
             margin-bottom: 20px;
             text-align: center;
         }
-        @media (min-width: 480px) { .stats { grid-template-columns: repeat(4, 1fr); } }
-        .A { color: #6aaa64; } .O { color: #5dade2; } .X { color: #f1c40f; } .Z { color: #ff4d4d; }
+        @media (min-width: 480px) { .stats { grid-template-columns: repeat(5, 1fr); } }
+        .A { color: #6aaa64; } .O { color: #5dade2; } .X { color: #f1c40f; } .U { color: #b39ddb; } .Z { color: #ff4d4d; }
         
         .settings { display: flex; align-items: center; gap: 10px; font-size: 12px; color: #818384; text-transform: uppercase; font-weight: bold; }
         .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
@@ -81,6 +81,7 @@
         <div class="A">ANS: <span id="answerCount">0</span></div>
         <div class="O">ORIG: <span id="originalCount">0</span></div>
         <div class="X">EXT: <span id="extendedCount">0</span></div>
+        <div class="U">UNLIK: <span id="unlikelyCount">0</span></div>
         <div class="Z">ZERO: <span id="zeroChanceCount">0</span></div>
     </div>    
 
@@ -172,11 +173,12 @@
         }
 
         function updateStats() {
-            const counts = { 'A': 0, 'O': 0, 'X': 0, 'Z': 0 };
+            const counts = { 'A': 0, 'O': 0, 'X': 0, 'U': 0, 'Z': 0 };
             possibleAnswers.forEach(w => { if(counts.hasOwnProperty(w.category)) counts[w.category]++; });
             document.getElementById('answerCount').textContent = counts.A;
             document.getElementById('originalCount').textContent = counts.O;
             document.getElementById('extendedCount').textContent = counts.X;
+            document.getElementById('unlikelyCount').textContent = counts.U;
             document.getElementById('zeroChanceCount').textContent = counts.Z;
         }
 
@@ -211,20 +213,24 @@
         }
 
         function renderTopWords(num) {
+            // Exclude both U (unlikely) and Z (zero chance) from entropy target pool
             const targets = possibleAnswers.filter(w => ['O', 'X', 'A'].includes(w.category));
             assignEntropy(targets.length > 0 ? targets : possibleAnswers);
             
             allWords.sort((a, b) => b.entropy - a.entropy);
 
-            // UPDATED SORTING: Push 'Z' (Zero chance) words to the very bottom
+            // Push U and Z to the bottom, U above Z
             possibleAnswers.sort((a, b) => {
-                if (a.category === 'Z' && b.category !== 'Z') return 1;
-                if (a.category !== 'Z' && b.category === 'Z') return -1;
-                return b.entropy - a.entropy; // Keep entropy sort within same priority group
+                const priority = { 'A': 0, 'O': 0, 'X': 0, 'U': 1, 'Z': 2 };
+                const pa = priority[a.category] ?? 0;
+                const pb = priority[b.category] ?? 0;
+                if (pa !== pb) return pa - pb;
+                return b.entropy - a.entropy;
             });
 
-            const bestPossible = possibleAnswers[0] && possibleAnswers[0].category !== 'Z' ? possibleAnswers[0].entropy : 0;
-            const maxEntropyWords = allWords.filter(w => w.entropy > bestPossible + 0.01).slice(0, 5);
+            const bestPossible = possibleAnswers.find(w => !['U', 'Z'].includes(w.category));
+            const bestEntropy = bestPossible ? bestPossible.entropy : 0;
+            const maxEntropyWords = allWords.filter(w => w.entropy > bestEntropy + 0.01).slice(0, 5);
 
             let html = "";
             if (maxEntropyWords.length > 0) {
