@@ -219,9 +219,9 @@
             
             allWords.sort((a, b) => b.entropy - a.entropy);
 
-            // Push U and Z to the bottom, U above Z
+            // Push only Z to the bottom; U sorts with A/O/X by entropy
             possibleAnswers.sort((a, b) => {
-                const priority = { 'A': 0, 'O': 0, 'X': 0, 'U': 1, 'Z': 2 };
+                const priority = { 'A': 0, 'O': 0, 'X': 0, 'U': 0, 'Z': 1 };
                 const pa = priority[a.category] ?? 0;
                 const pb = priority[b.category] ?? 0;
                 if (pa !== pb) return pa - pb;
