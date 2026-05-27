@@ -1,0 +1,27 @@
+# dependabot.yml
+# ---------------
+# This file tells GitHub's Dependabot service to automatically check
+# whether the GitHub Actions used in our workflows are up to date.
+#
+# Without this, outdated action versions can silently break workflows.
+# (e.g. in May 2026, actions/checkout@v3 and actions/setup-python@v4
+# stopped working when GitHub deprecated Node.js 20.)
+#
+# When Dependabot finds an outdated action, it opens a Pull Request
+# in this repo with the version bump already done. You just review
+# and merge it.
+#
+# "package-ecosystem: github-actions" means we're only watching
+# GitHub Actions versions — not Python packages or anything else.
+#
+# "directory: /" means it looks in .github/workflows/ for workflow files.
+#
+# "interval: monthly" means it checks once a month, which is plenty
+# for something this low-maintenance.
+
+version: 2
+updates:
+ - package-ecosystem: "github-actions"
+   directory: "/"
+   schedule:
+     interval: "monthly"
