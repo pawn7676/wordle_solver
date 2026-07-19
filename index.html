@@ -2,13 +2,39 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Wordle Solver</title>
+
+    <!-- PWA / Add to Home Screen -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Wordle Solver">
+    <meta name="theme-color" content="#121213">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-180.png">
+    <link rel="icon" type="image/png" href="icon-512.png">
     <style>
-        body { font-family: sans-serif; background: #121213; color: white; max-width: 600px; margin: auto; padding: 20px; }
-        
-        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        html { background: #121213; -webkit-text-size-adjust: 100%; }
+        body {
+            font-family: sans-serif; background: #121213; color: white;
+            max-width: 600px; margin: auto;
+            padding: calc(20px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right))
+                     calc(20px + env(safe-area-inset-bottom)) calc(20px + env(safe-area-inset-left));
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .header-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
         h1 { margin: 0; font-size: 24px; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+
+        #resetBtn {
+            width: 34px; height: 34px; flex: none; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: #3a3a3c; color: #d7dadc; border-radius: 50%;
+            font-size: 18px; line-height: 1;
+        }
+        #resetBtn:active { background: #538d4e; color: white; }
 
         .stats { 
             display: grid;
@@ -67,7 +93,10 @@
 </head>
 <body>
     <div class="header-row">
-        <h1>Wordle Solver</h1>
+        <div class="header-left">
+            <h1>Wordle Solver</h1>
+            <button id="resetBtn" onclick="resetPuzzle()" title="Start a new puzzle" aria-label="Start a new puzzle">&#8635;</button>
+        </div>
         <div class="settings">
             <span>Exclude Past Answers</span>
             <label class="switch">
@@ -86,8 +115,10 @@
     </div>    
 
     <div class="input-container">
-        <input type="text" id="guessInput" placeholder="Guess" maxlength="5">
-        <input type="text" id="patternInput" placeholder="Pattern" maxlength="5">
+        <input type="text" id="guessInput" placeholder="Guess" maxlength="5"
+               autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
+        <input type="text" id="patternInput" placeholder="Pattern" maxlength="5"
+               autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false">
         <button onclick="handleTurn()">Submit Turn</button>
         <button id="computeBtn" onclick="runFullAnalysis()">Compute Entropy</button>
     </div>
@@ -170,6 +201,17 @@
             applyFilters();
             gInput.value = ''; pInput.value = ''; gInput.focus();
             document.getElementById('computeBtn').style.display = 'none';
+        }
+
+        function resetPuzzle() {
+            if (moveHistory.length > 0 && !confirm("Start a new puzzle?")) return;
+            moveHistory = [];
+            document.getElementById('guessInput').value = '';
+            document.getElementById('patternInput').value = '';
+            document.getElementById('computeBtn').style.display = '';
+            document.getElementById('output').innerText = "Enter a guess or click 'Compute Entropy' to begin.";
+            applyFilters();
+            window.scrollTo(0, 0);
         }
 
         function updateStats() {
