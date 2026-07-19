@@ -35,6 +35,8 @@
             font-size: 18px; line-height: 1;
         }
         #resetBtn:active { background: #538d4e; color: white; }
+        #resetBtn.spinning { animation: spin .8s linear infinite; opacity: .6; }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .stats { 
             display: grid;
@@ -137,13 +139,20 @@
         let allWords = [];
         let possibleAnswers = [];
         let moveHistory = [];
-        const CURRENT_DATE = new Date();
+        let CURRENT_DATE = new Date();
+
+        async function loadWords(bustCache) {
+            const url = bustCache ? 'all_words.json?v=' + Date.now() : 'all_words.json';
+            const response = await fetch(url, { cache: bustCache ? 'reload' : 'default' });
+            if (!response.ok) throw new Error('HTTP ' + response.status);
+            const data = await response.json();
+            allWords = Object.entries(data).map(([word, info]) => new Word(word, info.category, info.date));
+            CURRENT_DATE = new Date();
+        }
 
         async function init() {
             try {
-                const response = await fetch('all_words.json');
-                const data = await response.json();
-                allWords = Object.entries(data).map(([word, info]) => new Word(word, info.category, info.date));
+                await loadWords(false);
                 applyFilters();
             } catch (e) {
                 document.getElementById('output').innerText = "Error loading data.";
@@ -203,14 +212,30 @@
             document.getElementById('computeBtn').style.display = 'none';
         }
 
-        function resetPuzzle() {
+        async function resetPuzzle() {
             if (moveHistory.length > 0 && !confirm("Start a new puzzle?")) return;
+
+            const btn = document.getElementById('resetBtn');
+            const out = document.getElementById('output');
             moveHistory = [];
             document.getElementById('guessInput').value = '';
             document.getElementById('patternInput').value = '';
             document.getElementById('computeBtn').style.display = '';
-            document.getElementById('output').innerText = "Enter a guess or click 'Compute Entropy' to begin.";
+            btn.disabled = true;
+            btn.classList.add('spinning');
+            out.innerText = "Refreshing word list...";
+
+            let note = "";
+            try {
+                await loadWords(true);
+            } catch (e) {
+                note = " (offline - using last loaded word list)";
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('spinning');
             applyFilters();
+            out.innerText = "Enter a guess or click 'Compute Entropy' to begin." + note;
             window.scrollTo(0, 0);
         }
 
