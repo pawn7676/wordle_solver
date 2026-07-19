@@ -213,8 +213,6 @@
         }
 
         async function resetPuzzle() {
-            if (moveHistory.length > 0 && !confirm("Start a new puzzle?")) return;
-
             const btn = document.getElementById('resetBtn');
             const out = document.getElementById('output');
             moveHistory = [];
