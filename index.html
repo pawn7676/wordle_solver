@@ -43,8 +43,6 @@
             font-size: 18px; line-height: 1;
         }
         #resetBtn:active, #backBtn:active { background: #538d4e; color: white; }
-        /* Revealed by JS only when a touch user summons keyboard */
-        #backBtn { display: none; }
         #resetBtn.spinning { animation: spin .8s linear infinite; opacity: .6; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -418,15 +416,6 @@
                 addLetters(e.key);
             }
         });
-
-        // The on-screen keyboard can only be up while gEl has
-        // focus, and that focus only happens when a tile is
-        // tapped. So focus here is evidence of a touch user,
-        // and the only reliable signal available — iOS exposes
-        // no API for whether a hardware keyboard is attached.
-        gEl.addEventListener('focus', () => {
-            document.getElementById('backBtn').style.display = 'flex';
-        }, { once: true });
 
         // On-screen keyboard path: characters land in the
         // hidden input, which we immediately drain so it can
